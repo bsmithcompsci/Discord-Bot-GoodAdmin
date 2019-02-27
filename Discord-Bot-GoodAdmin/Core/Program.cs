@@ -70,12 +70,15 @@ namespace GoodAdmin.Core
             DiscordSocketClient client = new DiscordSocketClient();
 
             // EVENT REGISTRES \\
-            client.MessageReceived += MessageHandler.handleMessage;
+            client.MessageReceived += MessageHandler.HandleMessage;
             client.Log += Client_Log;
             client.Ready += Client_Ready;
 
-            // Start the Discord Bot \\
+            // Load Configurations and Modules \\
             await Config.LoadGlobalConfig();
+            await MessageHandler.InstallModules();
+
+            // Start the Discord Bot \\
             await client.LoginAsync(TokenType.Bot, Config.config.TOKEN);
             await client.StartAsync();
 

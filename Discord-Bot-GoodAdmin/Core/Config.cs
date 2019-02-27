@@ -9,17 +9,7 @@ using Newtonsoft.Json;
 
 namespace GoodAdmin.Core
 {
-    struct Global_Configurations
-    {
-        public string token;
-    }
-
-    struct LocalGuild_Configurations
-    {
-
-    }
-
-    public class configC
+    public class ConfigC
     {
         public string TOKEN { get; set; }
         public string PREFIX { get; set; }
@@ -27,8 +17,8 @@ namespace GoodAdmin.Core
 
     public class Config
     {
-        public static configC config;
-        public static async Task LoadGlobalConfig()
+        public static ConfigC config;
+        public static Task LoadGlobalConfig()
         {
             string configRaw = "";
             if (!File.Exists("./gConfig.json"))
@@ -40,12 +30,13 @@ namespace GoodAdmin.Core
                 configRaw = File.ReadAllText("./gConfig.json");
             config = JsonConvert.DeserializeObject<ConfigC>(configRaw);
 
-
+            return Task.CompletedTask;
         }
 
-        public static async Task LoadGuildConfig(IGuild guild)
+        public static Task LoadGuildConfig(IGuild guild)
         {
 
+            return Task.CompletedTask;
         }
     }
 }

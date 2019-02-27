@@ -1,4 +1,5 @@
 ﻿using GoodAdmin_API;
+using GoodAdmin_API.Core.Handlers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +15,14 @@ namespace Module_Test
         {
             Console.WriteLine("Loaded Test");
             return Task.CompletedTask;
+        }
+
+        public CommandHandler LoadCommandHandler()
+        {
+            CommandHandler handler = new CommandHandler();
+            handler.AddCommand(new Ping());
+
+            return handler;
         }
     }
 }

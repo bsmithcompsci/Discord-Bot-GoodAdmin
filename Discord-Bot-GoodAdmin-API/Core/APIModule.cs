@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using GoodAdmin_API.Core.Handlers;
 using System.Threading.Tasks;
 
 namespace GoodAdmin_API
@@ -9,5 +6,6 @@ namespace GoodAdmin_API
     public interface APIModule
     {
         Task Load();
+        CommandHandler LoadCommandHandler();
     }
 }
