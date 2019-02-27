@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
 using Discord;
 using Discord.WebSocket;
 using GoodAdmin.Core.Handlers;
@@ -63,6 +64,7 @@ namespace GoodAdmin.Core
     */
     public class Program
     {
+
         private string token = "";
 
 
@@ -75,9 +77,10 @@ namespace GoodAdmin.Core
             client.MessageReceived += MessageHandler.handleMessage;
             client.Log += Client_Log;
             client.Ready += Client_Ready;
-            
+
             // Start the Discord Bot \\
-            await client.LoginAsync(TokenType.Bot, token);
+            await Config.LoadGlobalConfig();
+            await client.LoginAsync(TokenType.Bot, Config.config.TOKEN);
             await client.StartAsync();
 
             // Prevents the application from closing.
