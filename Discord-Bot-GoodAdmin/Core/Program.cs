@@ -64,10 +64,6 @@ namespace GoodAdmin.Core
     */
     public class Program
     {
-
-        private string token = "";
-
-
         private async Task MainAsync()
         {
             // Initialization
