@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
+using Discord.WebSocket;
+using GoodAdmin.Core.Handlers;
 
 namespace GoodAdmin.Core
 {
@@ -16,21 +18,39 @@ namespace GoodAdmin.Core
                 - Warn
                 - Inspect
                 - Purge
-            TODO : Create Category Roles
+            TODO : Agreement to Rules/Terms and Conditions. (Optional Module)
+                - Seperated Channel from Members access.
+                - Creates a Member Role
+                - Deletes all messages, and only reads agree command.
+            TODO : Create Category Roles (Optional Module)
                 - Example Staff, or Devs
-            TODO : Auto-Promotion
+            TODO : Auto-Promotion (Optional Module)
                 - Either by Levels or  
-            TODO : Levels
+            TODO : Levels (Optional Module)
                 - UI
                 - Progessive System
                 - Level by Activity
-            TODO : Minigame
-                - Text based Games    
-            TODO : Ticket System
+                    * x1 Message
+                    * x1.2 Command
+                    * x1.5 Image
+                    * x2 Reaction
+            TODO : Minigame (Optional Module)
+                - Text based Games
+                    * Counter
+                    * Spam
+                    * Texting Nations [Turn Based Game]
+            TODO : Ticket System (Optional Module)
                 - Creates Private Channel for Staff and the Reporter to speak in.
                 - Staff can Append users into discussion /ticket append @user
                 - Staff can close ticket /ticket close
                 - Staff can open ticket /ticket open #id
+            TODO : Logging System
+                - Editing Logs
+                - Moderation Logs
+                - Joining Logs (Shows default/custom message)
+                - Leaving Logs (Ban/Kick may show, if enabled, otherwise shows default/custom message)
+                - Ban Logs
+                - Kick Logs
         API
             TODO : Simpliar Private-Message to Users
             TODO : Simpliar Channel Management
@@ -43,10 +63,41 @@ namespace GoodAdmin.Core
     */
     public class Program
     {
-        public static void Main(string[] args) => new Program().MainAsync().GetAwaiter().GetResult();
+        private string token = "";
+
 
         private async Task MainAsync()
         {
+            // Initialization
+            DiscordSocketClient client = new DiscordSocketClient();
+
+            // EVENT REGISTRES \\
+            client.MessageReceived += MessageHandler.handleMessage;
+            client.Log += Client_Log;
+            client.Ready += Client_Ready;
+            
+            // Start the Discord Bot \\
+            await client.LoginAsync(TokenType.Bot, token);
+            await client.StartAsync();
+
+            // Prevents the application from closing.
+            await Task.Delay(-1);
         }
+
+
+        private Task Client_Log(LogMessage msg)
+        {
+            Console.WriteLine(msg.ToString());
+            return Task.CompletedTask;
+        }
+
+        private Task Client_Ready()
+        {
+            Console.WriteLine("GoodAdmin is ready to Administrate!");
+            return Task.CompletedTask;
+        }
+
+        // Runner Function - Ignore
+        public static void Main(string[] args) => new Program().MainAsync().GetAwaiter().GetResult();
     }
 }

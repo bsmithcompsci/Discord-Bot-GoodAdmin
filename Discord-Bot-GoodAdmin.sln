@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.27428.2037
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Discord-Bot-GoodAdmin", "Discord-Bot-GoodAdmin\Discord-Bot-GoodAdmin.csproj", "{FFADBA4A-3F9E-4FA7-8857-EBAFF44B6642}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Discord-Bot-GoodAdmin-API", "Discord-Bot-GoodAdmin-API\Discord-Bot-GoodAdmin-API.csproj", "{3BDFDA10-C630-484F-A075-9A519761284F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{FFADBA4A-3F9E-4FA7-8857-EBAFF44B6642}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FFADBA4A-3F9E-4FA7-8857-EBAFF44B6642}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FFADBA4A-3F9E-4FA7-8857-EBAFF44B6642}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3BDFDA10-C630-484F-A075-9A519761284F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3BDFDA10-C630-484F-A075-9A519761284F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3BDFDA10-C630-484F-A075-9A519761284F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3BDFDA10-C630-484F-A075-9A519761284F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
