@@ -1,4 +1,5 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.WebSocket;
 using GoodAdmin.Core.API;
 using GoodAdmin.Core.Handlers;
 using System;
@@ -28,15 +29,27 @@ namespace GoodAdmin.Core.Commands
                     count++;
                     if (oldCategory != cmd.GetCategory())
                     {
-                        await dm.SendMessageAsync("Category : " + cmd.GetCategory() + "\n" + content);
-                        content = "";
-                        oldCategory = cmd.GetCategory();
+                        if (content == "")
+                        {
+                            await dm.SendMessageAsync("There was an error with trying to fetch a command. COMMAND: "+cmd.GetType().Name);
+                            continue;
+                        } else
+                        {
+                            EmbedBuilder emb = new EmbedBuilder();
+                            emb.Title = "Test";
+                            emb.Description = "This is my test with embeds in C#!";
+                            await dm.SendMessageAsync("", false, emb.Build());
+                            await dm.SendMessageAsync("Category : " + cmd.GetCategory() + "\n" + content);
+                            content = "";
+                            oldCategory = cmd.GetCategory();
+                        }
+                        
                     }
                     content += Config.config.PREFIX + cmd.GetCommandText() + "\n";
                 }
             }
             if (count == 0)
-                await dm.SendMessageAsync("No Commands are registered with the system right now, please contact developers, if this is a problem!");
+                await dm.SendMessageAsync("No commands are registered at the moment. If you feel this is an inconvience, please feel free to contact my developers!");
 
             var message = await ch.SendMessageAsync(msg.Author.Mention + " I have sent you all the commands!");
             await Task.Delay(1000 * 5);

@@ -14,6 +14,7 @@ namespace Module_Test
 
         public override async Task Execute(SocketMessage msg, string[] args)
         {
+            Console.WriteLine("Pong!");
             var dm = await msg.Author.GetOrCreateDMChannelAsync();
             await dm.SendMessageAsync("Pong");
         }
