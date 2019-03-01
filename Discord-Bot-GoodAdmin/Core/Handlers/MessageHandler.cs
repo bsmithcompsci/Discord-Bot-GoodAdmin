@@ -1,35 +1,29 @@
-﻿using Discord.WebSocket;
-using GoodAdmin.Core.API;
-using GoodAdmin.Core.Commands;
-using GoodAdmin_API.Core.Handlers;
+﻿using Discord.Commands;
+using Discord.WebSocket;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
-
 
 namespace GoodAdmin.Core.Handlers
 {
     public static class MessageHandler
     {
-        private static CommandHandler cmdHandler;
 
         public static async Task InstallModules()
         {
-            // TODO : Load External DLL Files that will handle the commands.
+            // Making space for modules.
             if (!Directory.Exists("./modules"))
                 Directory.CreateDirectory("./modules");
 
             DirectoryInfo dInfo = new DirectoryInfo("./modules");
             FileInfo[] files = dInfo.GetFiles("*.dll");
 
-            cmdHandler = new CommandHandler();
-            cmdHandler.AddCommand(new HelpCommand());
+            // Initializing built-in commands from this source.
+            await Program.commands.AddModulesAsync(Assembly.GetEntryAssembly(), Program.services);
 
+            // Loading the module DLLs
             if (files != null)
             {
                 foreach (FileInfo file in files)
@@ -43,66 +37,59 @@ namespace GoodAdmin.Core.Handlers
                 }
             }
 
-            foreach(Assembly plugin in AppDomain.CurrentDomain.GetAssemblies())
+            // Loading modules core code, and commands.
+            foreach(Assembly module in AppDomain.CurrentDomain.GetAssemblies())
             {
                 try
                 {
-                    foreach (Type t in plugin.GetTypes())
+                    foreach (Type t in module.GetTypes())
                     {
                         if (t.GetInterface(typeof(GoodAdmin_API.APIModule).Name) != null)
                         {
-                            Console.WriteLine("Loading Module :: " + plugin.GetName());
+                            Console.WriteLine("Loading Module :: " + module.GetName());
                             Stopwatch stopwatch = new Stopwatch();
                             stopwatch.Start();
-                            GoodAdmin_API.APIModule module = Activator.CreateInstance(t) as GoodAdmin_API.APIModule;
-                            await module.Load();
-                            if (module.LoadCommandHandler() != null)
-                            {
-
-                                List<ACommand> cmds = module.LoadCommandHandler().GetCommands();
-                                cmdHandler.AddCommands(cmds);
-#if DEBUG
-                                foreach (ACommand cmd in cmds)
-                                    Console.WriteLine("Added Commands :: '" + cmd.GetCommandText() + "'");
-#endif
-                            }
+                            GoodAdmin_API.APIModule instance = Activator.CreateInstance(t) as GoodAdmin_API.APIModule;
+                            await instance.Load();
+                            await Program.commands.AddModulesAsync(module, Program.services);
                             stopwatch.Stop();
-                            Console.WriteLine("Loaded Module :: " + plugin.GetName() + " (" + stopwatch.ElapsedMilliseconds + "ms)");
+                            Console.WriteLine("Loaded Module :: " + module.GetName() + " (" + stopwatch.ElapsedMilliseconds + "ms)");
                         }
                     }
                 }
                 catch (Exception e)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.Write("Error Loading :: " + plugin.GetName() + " -> ");
+                    Console.Write("Error Loading :: " + module.GetName() + " -> ");
                     Console.WriteLine(e.Message);
                     Console.ResetColor();
                 }
             }
+
+#if DEBUG
+            // Displays Debugger information into the console, when compiled in Debug mode.
+            foreach (CommandInfo cmd in Program.commands.Commands)
+                Console.WriteLine("Added Commands :: '" + cmd.Name + "'");
+#endif
         }
 
         public static async Task HandleMessage(SocketMessage msg)
         {
-            foreach (ACommand cmd in cmdHandler.GetCommands())
-            {
-                if ((Config.config.PREFIX + cmd.GetCommandText()).ToLower() == msg.Content.ToLower())
-                {
-                    // Remove the beginning command arg. Ex: -[!ping]- foo
-                    string[] _args = msg.Content.Split(' ');
-                    string[] args = new string[_args.Length - 1];
+            // Verify, if the sender isn't a bot or a web hook.
+            if (msg.Author.IsBot) return;
+            if (msg.Author.IsWebhook) return;
+            SocketUserMessage message = msg as SocketUserMessage;
+            if (message == null) return;
 
-                    for (var i = 1; i < _args.Length; i++)
-                        args[i - 1] = _args[i];
-                    
-                    await cmd.Execute(msg, args);
-                    break;
-                }
-            }
-        }
+            int argPos = 0;
 
-        public static CommandHandler GetCommandHandler()
-        {
-            return cmdHandler;
+            if (!(message.HasCharPrefix('!', ref argPos) || message.HasMentionPrefix(Program.client.CurrentUser, ref argPos))) return;
+
+            var context = new CommandContext(Program.client, message);
+
+            var result = await Program.commands.ExecuteAsync(context, argPos, Program.services);
+            if (!result.IsSuccess)
+                await context.Channel.SendMessageAsync(result.ErrorReason);
         }
     }
 }

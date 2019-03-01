@@ -1,23 +1,19 @@
 ﻿using Discord;
+using Discord.Commands;
 using Discord.WebSocket;
-using GoodAdmin.Core.API;
-using GoodAdmin.Core.Handlers;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace GoodAdmin.Core.Commands
 {
-    public class HelpCommand : ACommand
+    public class HelpCommand : ModuleBase<CommandContext>
     {
-        public HelpCommand() : base("help") { }
-
-        public override async Task Execute(SocketMessage msg, string[] args)
+        [Command("help"), Remarks("General")]
+        public async Task Execute()
         {
-            var dm = await msg.Author.GetOrCreateDMChannelAsync();
-            var ch = msg.Channel;
+            // Initializes some shortcuts.
+            var dm = await Context.User.GetOrCreateDMChannelAsync();
+            var ch = Context.Channel;
 
             EmbedBuilder embed = new EmbedBuilder
             {
@@ -29,13 +25,14 @@ namespace GoodAdmin.Core.Commands
             string oldCategory = "";
             int count = 0;
             string content = "";
-            foreach (ACommand cmd in MessageHandler.GetCommandHandler().GetCommands().OrderBy( x => x.GetCategory() ))
+            foreach (CommandInfo cmd in Program.commands.Commands.OrderBy(f => f.Remarks))
             {
-                if (cmd != this)
+                // Filters through all the commands that aren't the help command.
+                if (cmd.Name.ToLower() != "help")
                 {
                     count++;
-                    content += Config.config.PREFIX + cmd.GetCommandText() + "\n";
-                    if (oldCategory != cmd.GetCategory())
+                    content += Config.config.PREFIX + cmd.Name + "\n";
+                    if (oldCategory != cmd.Remarks)
                     {
                         if (content == "")
                             await dm.SendMessageAsync("There was an error with trying to fetch a command. COMMAND: " + cmd.GetType().Name);
@@ -43,13 +40,13 @@ namespace GoodAdmin.Core.Commands
                         {
                             embed = new EmbedBuilder
                             {
-                                Title = cmd.GetCategory(),
+                                Title = cmd.Remarks,
                                 Description = content,
                                 Color = Color.Green
                             };
                             await dm.SendMessageAsync(embed: embed.Build());
                             content = "";
-                            oldCategory = cmd.GetCategory();
+                            oldCategory = cmd.Remarks;
                         } 
                     }
                 }
@@ -67,9 +64,12 @@ namespace GoodAdmin.Core.Commands
                 await dm.SendMessageAsync(embed: embed.Build());
             }
 
-            var message = await ch.SendMessageAsync(msg.Author.Mention + " I have sent you all the commands!");
-            await Task.Delay(1000 * 5);
-            await message.DeleteAsync();
+            if (ch.GetType() != typeof(SocketDMChannel))
+            {
+                var message = await ch.SendMessageAsync(Context.User.Mention + " I have sent you all the commands!");
+                await Task.Delay(1000 * 5);
+                await message.DeleteAsync();
+            }
         }
     }
 }

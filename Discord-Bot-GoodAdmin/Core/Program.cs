@@ -5,8 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Discord;
+using Discord.Commands;
 using Discord.WebSocket;
 using GoodAdmin.Core.Handlers;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace GoodAdmin.Core
 {
@@ -64,20 +66,27 @@ namespace GoodAdmin.Core
     */
     public class Program
     {
+        public static DiscordSocketClient client;
+        public static CommandService commands;
+        public static IServiceProvider services;
+
         private async Task MainAsync()
         {
             // Initialization
-            DiscordSocketClient client = new DiscordSocketClient();
+             client = new DiscordSocketClient();
 
             // EVENT REGISTRES \\
             client.MessageReceived += MessageHandler.HandleMessage;
             client.Log += Client_Log;
             client.Ready += Client_Ready;
 
+            commands = new CommandService();
+            services = new ServiceCollection().BuildServiceProvider();
+
             // Load Configurations and Modules \\
             await Config.LoadGlobalConfig();
             await MessageHandler.InstallModules();
-
+            
             // Start the Discord Bot \\
             await client.LoginAsync(TokenType.Bot, Config.config.TOKEN);
             await client.StartAsync();

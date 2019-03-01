@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Discord;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,7 +11,10 @@ namespace GoodAdmin.Core.API
     {
         public static void Embed()
         {
+            EmbedBuilder embed = new EmbedBuilder
+            {
 
+            };
         }
 
     }
