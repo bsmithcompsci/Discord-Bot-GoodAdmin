@@ -2,7 +2,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace Module_Test
+namespace Module_Administrative
 {
     public class Module : APIModule
     {

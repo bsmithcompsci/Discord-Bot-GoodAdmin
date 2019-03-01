@@ -1,4 +1,5 @@
-﻿using Discord.Commands;
+﻿using Discord;
+using Discord.Commands;
 using Discord.WebSocket;
 using System;
 using System.Diagnostics;
@@ -10,7 +11,10 @@ namespace GoodAdmin.Core.Handlers
 {
     public static class MessageHandler
     {
-
+        /// <summary>
+        /// Searches for Modules that use the GoodAdmin's API, and loads them into the system. Further more adding commands, and other things into the main application. 
+        /// </summary>
+        /// <returns></returns>
         public static async Task InstallModules()
         {
             // Making space for modules.
@@ -31,48 +35,46 @@ namespace GoodAdmin.Core.Handlers
                     Console.WriteLine("Loading Module :: " + file.Name);
                     Stopwatch stopwatch = new Stopwatch();
                     stopwatch.Start();
-                    Assembly.LoadFile(Path.GetFullPath("./modules/") + file.Name);
-                    stopwatch.Stop();
-                    Console.WriteLine("Loaded Module :: " + file.Name + " ("+ stopwatch.ElapsedMilliseconds +"ms)");
-                }
-            }
 
-            // Loading modules core code, and commands.
-            foreach(Assembly module in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                try
-                {
-                    foreach (Type t in module.GetTypes())
+                    Assembly module = Assembly.LoadFile(Path.GetFullPath("./modules/") + file.Name);
+                    try
                     {
-                        if (t.GetInterface(typeof(GoodAdmin_API.APIModule).Name) != null)
+                        foreach (Type t in module.GetTypes())
                         {
-                            Console.WriteLine("Loading Module :: " + module.GetName());
-                            Stopwatch stopwatch = new Stopwatch();
-                            stopwatch.Start();
-                            GoodAdmin_API.APIModule instance = Activator.CreateInstance(t) as GoodAdmin_API.APIModule;
-                            await instance.Load();
-                            await Program.commands.AddModulesAsync(module, Program.services);
-                            stopwatch.Stop();
-                            Console.WriteLine("Loaded Module :: " + module.GetName() + " (" + stopwatch.ElapsedMilliseconds + "ms)");
+                            if (t.GetInterface(typeof(GoodAdmin_API.APIModule).Name) != null)
+                            {
+                                GoodAdmin_API.APIModule instance = Activator.CreateInstance(t) as GoodAdmin_API.APIModule;
+                                await instance.Load();
+                                await Program.commands.AddModulesAsync(module, Program.services);
+                            }
                         }
                     }
+                    catch (Exception e)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.Write("Error Loading :: " + module.GetName() + " -> ");
+                        Console.WriteLine(e.Message);
+                        Console.ResetColor();
+                    }
+
+                    stopwatch.Stop();
+                    Console.WriteLine("Loaded Module :: " + file.Name + " (" + stopwatch.ElapsedMilliseconds + "ms)");
                 }
-                catch (Exception e)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.Write("Error Loading :: " + module.GetName() + " -> ");
-                    Console.WriteLine(e.Message);
-                    Console.ResetColor();
-                }
-            }
 
 #if DEBUG
-            // Displays Debugger information into the console, when compiled in Debug mode.
-            foreach (CommandInfo cmd in Program.commands.Commands)
-                Console.WriteLine("Added Commands :: '" + cmd.Name + "'");
+                // Displays Debugger information into the console, when compiled in Debug mode.
+                foreach (CommandInfo cmd in Program.commands.Commands)
+                    Console.WriteLine("Added Commands :: '" + cmd.Name + "'");
 #endif
+                
+            }
         }
 
+        /// <summary>
+        /// Event Handler, that handles the input from a user. Either by Direct Messaging or through a Guild.
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <returns></returns>
         public static async Task HandleMessage(SocketMessage msg)
         {
             // Verify, if the sender isn't a bot or a web hook.
@@ -89,7 +91,19 @@ namespace GoodAdmin.Core.Handlers
 
             var result = await Program.commands.ExecuteAsync(context, argPos, Program.services);
             if (!result.IsSuccess)
-                await context.Channel.SendMessageAsync(result.ErrorReason);
+            {
+                EmbedBuilder embed = new EmbedBuilder
+                {
+                    Color = Color.DarkRed,
+                    Footer = new EmbedFooterBuilder
+                    {
+                        Text = "Please contact my developers, I had an oopsie!"
+                    },
+                    Title = "[Internal Error] Command Input : `" + message.Content + "`",
+                    Description = "```\n" + result.ErrorReason + "```"
+                };
+                await context.Channel.SendMessageAsync(embed : embed.Build());
+            }
         }
     }
 }

@@ -6,8 +6,15 @@ using System.Threading.Tasks;
 
 namespace GoodAdmin.Core.Commands
 {
+    /// <summary>
+    /// The Class that holds the Help command.
+    /// </summary>
     public class HelpCommand : ModuleBase<CommandContext>
     {
+        /// <summary>
+        /// Help will display all the commands to the user privately. besides this command itself.
+        /// </summary>
+        /// <returns></returns>
         [Command("help"), Remarks("General")]
         public async Task Execute()
         {
@@ -21,6 +28,7 @@ namespace GoodAdmin.Core.Commands
                 Description = "",
                 Color = Color.Green
             };
+            await dm.SendMessageAsync(embed: embed.Build());
 
             string oldCategory = "";
             int count = 0;
@@ -31,7 +39,7 @@ namespace GoodAdmin.Core.Commands
                 if (cmd.Name.ToLower() != "help")
                 {
                     count++;
-                    content += Config.config.PREFIX + cmd.Name + "\n";
+                    content += Config.config.PREFIX + cmd.Name + (cmd.Summary != null && cmd.Summary.Trim().Length > 0 ? " - " + cmd.Summary : "") + "\n";
                     if (oldCategory != cmd.Remarks)
                     {
                         if (content == "")
@@ -52,7 +60,12 @@ namespace GoodAdmin.Core.Commands
                 }
             }
             if (count == 0)
-                await dm.SendMessageAsync("No commands are registered at the moment. If you feel this is an inconvience, please feel free to contact my developers!");
+                await dm.SendMessageAsync(embed : new EmbedBuilder
+                {
+                    Title = "No Commands Found",
+                    Description = "No commands are registered at the moment. If you feel this is an inconvience, please feel free to contact my developers!",
+                    Color = Color.DarkOrange
+                }.Build());
             else
             {
                 embed = new EmbedBuilder

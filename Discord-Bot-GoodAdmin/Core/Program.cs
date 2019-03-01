@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using GoodAdmin.Core.API;
 using GoodAdmin.Core.Handlers;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -69,6 +70,7 @@ namespace GoodAdmin.Core
         public static DiscordSocketClient client;
         public static CommandService commands;
         public static IServiceProvider services;
+        public static Database database;
 
         private async Task MainAsync()
         {
@@ -77,14 +79,20 @@ namespace GoodAdmin.Core
 
             // EVENT REGISTRES \\
             client.MessageReceived += MessageHandler.HandleMessage;
-            client.Log += Client_Log;
             client.Ready += Client_Ready;
+            client.JoinedGuild += GuildHandler.JoinedGuild;
+            client.LeftGuild += GuildHandler.LeftGuild;
+            
+            // EVENTS: Logging...
+            client.Log += Client_Log;
+
 
             commands = new CommandService();
             services = new ServiceCollection().BuildServiceProvider();
 
             // Load Configurations and Modules \\
             await Config.LoadGlobalConfig();
+            await Database.Connect();
             await MessageHandler.InstallModules();
             
             // Start the Discord Bot \\

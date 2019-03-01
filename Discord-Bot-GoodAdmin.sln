@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Discord-Bot-GoodAdmin-API",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Module-Test", "Module-Test\Module-Test.csproj", "{D9AD3D59-9CCA-4A26-822A-E98456CE07D6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Module-Administrative", "Module-Administrative\Module-Administrative.csproj", "{BEEAE042-B6EC-4C79-A035-0F7FF6B47DAB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{D9AD3D59-9CCA-4A26-822A-E98456CE07D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D9AD3D59-9CCA-4A26-822A-E98456CE07D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D9AD3D59-9CCA-4A26-822A-E98456CE07D6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BEEAE042-B6EC-4C79-A035-0F7FF6B47DAB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BEEAE042-B6EC-4C79-A035-0F7FF6B47DAB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BEEAE042-B6EC-4C79-A035-0F7FF6B47DAB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BEEAE042-B6EC-4C79-A035-0F7FF6B47DAB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
