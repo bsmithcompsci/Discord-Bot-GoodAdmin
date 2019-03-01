@@ -21,6 +21,7 @@ namespace Module_Test
         {
             CommandHandler handler = new CommandHandler();
             handler.AddCommand(new Ping());
+            handler.AddCommand(new EmbedC());
 
             return handler;
         }
