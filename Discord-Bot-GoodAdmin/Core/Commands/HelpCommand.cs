@@ -18,8 +18,15 @@ namespace GoodAdmin.Core.Commands
         {
             var dm = await msg.Author.GetOrCreateDMChannelAsync();
             var ch = msg.Channel;
-            
-            string oldCategory = null;
+
+            EmbedBuilder embed = new EmbedBuilder
+            {
+                Title = "GoodAdmin Commands ::",
+                Description = "",
+                Color = Color.Green
+            };
+
+            string oldCategory = "";
             int count = 0;
             string content = "";
             foreach (ACommand cmd in MessageHandler.GetCommandHandler().GetCommands().OrderBy( x => x.GetCategory() ))
@@ -27,29 +34,38 @@ namespace GoodAdmin.Core.Commands
                 if (cmd != this)
                 {
                     count++;
+                    content += Config.config.PREFIX + cmd.GetCommandText() + "\n";
                     if (oldCategory != cmd.GetCategory())
                     {
                         if (content == "")
+                            await dm.SendMessageAsync("There was an error with trying to fetch a command. COMMAND: " + cmd.GetType().Name);
+                        else
                         {
-                            await dm.SendMessageAsync("There was an error with trying to fetch a command. COMMAND: "+cmd.GetType().Name);
-                            continue;
-                        } else
-                        {
-                            EmbedBuilder emb = new EmbedBuilder();
-                            emb.Title = "Test";
-                            emb.Description = "This is my test with embeds in C#!";
-                            await dm.SendMessageAsync("", false, emb.Build());
-                            await dm.SendMessageAsync("Category : " + cmd.GetCategory() + "\n" + content);
+                            embed = new EmbedBuilder
+                            {
+                                Title = cmd.GetCategory(),
+                                Description = content,
+                                Color = Color.Green
+                            };
+                            await dm.SendMessageAsync(embed: embed.Build());
                             content = "";
                             oldCategory = cmd.GetCategory();
-                        }
-                        
+                        } 
                     }
-                    content += Config.config.PREFIX + cmd.GetCommandText() + "\n";
                 }
             }
             if (count == 0)
                 await dm.SendMessageAsync("No commands are registered at the moment. If you feel this is an inconvience, please feel free to contact my developers!");
+            else
+            {
+                embed = new EmbedBuilder
+                {
+                    Title = "",
+                    Description = "Commands Loaded : " + count,
+                    Color = Color.Green
+                };
+                await dm.SendMessageAsync(embed: embed.Build());
+            }
 
             var message = await ch.SendMessageAsync(msg.Author.Mention + " I have sent you all the commands!");
             await Task.Delay(1000 * 5);
