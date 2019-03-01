@@ -54,22 +54,30 @@ namespace GoodAdmin.Core.Commands
                     }
                 }
             }
-            if (count == 0)
-                await dm.SendMessageAsync("No commands are registered at the moment. If you feel this is an inconvience, please feel free to contact my developers!");
+            if (count == 0){
+                embed = new EmbedBuilder
+                {
+                    Title = ":x: [INTERNAL ERROR] CHxNO_COMMANDS_LOADED",
+                    Description = "No command's were loaded! If this causes an inconvience, please contact my developers.",
+                    Color = Color.Red
+                };
+                await dm.SendMessageAsync(embed: embed.Build());
+                }
             else
             {
                 embed = new EmbedBuilder
                 {
                     Title = "",
-                    Description = "Commands Loaded : " + count,
+                    Description = "Commands Loaded: " + count,
                     Color = Color.Green
                 };
                 await dm.SendMessageAsync(embed: embed.Build());
             }
-
-            var message = await ch.SendMessageAsync(msg.Author.Mention + " I have sent you all the commands!");
-            await Task.Delay(1000 * 5);
-            await message.DeleteAsync();
+            if(msg.Channel.GetType() != typeof(Discord.WebSocket.SocketDMChannel)){
+                var message = await ch.SendMessageAsync(msg.Author.Mention + ", I have sent you all the commands in your dm's!");
+                await Task.Delay(1000 * 5);
+                await message.DeleteAsync();
+            }
         }
     }
 }
