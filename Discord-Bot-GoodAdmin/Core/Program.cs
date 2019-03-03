@@ -113,6 +113,9 @@ namespace GoodAdmin.Core
         private Task Client_Ready()
         {
             Console.WriteLine("GoodAdmin is ready to Administrate!");
+
+            client.SetGameAsync(name: Config.config.PREFIX+"help | Ready!", type: ActivityType.Listening);
+
             return Task.CompletedTask;
         }
 
