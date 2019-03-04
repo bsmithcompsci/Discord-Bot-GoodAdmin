@@ -30,3 +30,15 @@ module.exports.senttodms = (type) => {
         return e;
     }
 }
+
+module.exports.success = (type, chan) => {
+    if (type == "setlogs") {
+        var e = new disc.RichEmbed();
+        e.setTitle(":white_check_mark: Logs channel has been set.");
+        if (chan)
+            e.setDescription("The logs channel has been set to " + chan);
+
+        e.setColor("GREEN");
+        return e;
+    }
+}

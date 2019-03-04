@@ -8,18 +8,21 @@ module.exports.execute = (client, msg, args, odata) => {
     e.setTitle(":pencil: Commands");
     var general = "";
     var moderation = "";
+    var guild = "";
     var misc = "";
     //Log for debug :(odata)
     for (i in odata.cmds) {
         //Log for debug :(odata.cmds[i]);
         var command = odata.cmds[i].data.details;
 
-        if (command.catagory == 1) {
+        if (command.catagory == 1 && command.hidden != true) {
             general += command.name + " | " + command.usage + " | " + command.sdesc + "\n";
-        } else if (command.catagory == 2) {
+        } else if (command.catagory == 2 && command.hidden != true) {
             moderation += command.name + " | " + command.usage + " | " + command.sdesc + "\n";
-        } else if (command.catagory == 3) {
+        } else if (command.catagory == 3 && command.hidden != true) {
             misc += command.name + " | " + command.usage + " | " + command.sdesc + "\n";
+        } else if (command.catagory == 4 && command.hidden != true) {
+            guild += command.name + " | " + command.usage + " | " + command.sdesc + "\n";
         }
 
         if (i > odata.cmds.length || i == odata.cmds.length || i == odata.cmds.length - 1) {
@@ -33,9 +36,13 @@ module.exports.execute = (client, msg, args, odata) => {
             if (misc == "") {
                 misc = "None registered.";
             }
+            if (guild == "") {
+                guild = "None registered";
+            }
 
             e.addField(":bookmark: General Commands:", general);
             e.addField(":shield: Moderation Commands:", moderation);
+            e.addField(":gear: Server Commands:", guild);
             e.addField(":stuck_out_tongue_winking_eye: Misc Commands:", misc);
             e.setColor("BLUE");
             msg.author.send({ embed: e }).then(mess => { msg.channel.send({ embed: api.senttodms("help") }); if (msg.deleteable) { msg.delete() }; setTimeout(function () { mess.delete() }, 120000); }).catch(er => {

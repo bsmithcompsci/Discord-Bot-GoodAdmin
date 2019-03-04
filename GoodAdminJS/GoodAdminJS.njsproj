@@ -35,7 +35,16 @@
     <Compile Include="commands\ping.js">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="commands\setlogs.js">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="commands\simerr.js">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="data\core\api\embeds.js">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="data\core\api\errors.js">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="data\core\config.js">
