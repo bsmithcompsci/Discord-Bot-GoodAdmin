@@ -29,10 +29,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="app.js" />
-    <Compile Include="commands\guildstats.js">
+    <Compile Include="commands\help.js">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="commands\ping.js">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="data\core\api\embeds.js">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="data\core\config.js">
@@ -58,6 +61,7 @@
     <Folder Include="commands\" />
     <Folder Include="data\core\" />
     <Folder Include="data\core\events\" />
+    <Folder Include="data\core\api\" />
     <Folder Include="data\core\shortcuts\" />
   </ItemGroup>
   <!-- Do not delete the following Import Project.  While this appears to do nothing it is a marker for setting TypeScript properties before our import that depends on them. -->
