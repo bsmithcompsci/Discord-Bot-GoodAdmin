@@ -29,10 +29,25 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="app.js" />
+    <Compile Include="commands\addmod.js">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="commands\help.js">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="commands\ping.js">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="commands\players.js">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="commands\purge.js">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="commands\reason.js">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="commands\removemod.js">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="commands\setlogs.js">
@@ -47,10 +62,16 @@
     <Compile Include="data\core\api\errors.js">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="data\core\api\logs.js">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="data\core\config.js">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="data\core\errorHandler.js">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="data\core\events\guildCreate.js">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="data\core\events\message.js">

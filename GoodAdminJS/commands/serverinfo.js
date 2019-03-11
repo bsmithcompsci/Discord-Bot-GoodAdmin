@@ -25,5 +25,8 @@ module.exports.execute = (client, msg) => {
     total = humans + bots;
 
     var e = new disc.RichEmbed();
-    e.setTitle("")
+    e.setTitle(":pencil: Server information");
+    if (guildE.logs) {
+        e.addField()
+    }
 }

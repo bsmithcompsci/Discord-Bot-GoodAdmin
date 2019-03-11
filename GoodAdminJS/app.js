@@ -14,7 +14,7 @@ const config = require("./data/core/config.js").load().then(data => {
     process.env.CONFIG = _CONFIG;
     client.login(_CONFIG.TOKEN);
 }).catch(err => {
-    //Log for debug :("err occured : " + err);
+    console.log("err occured : " + err);
     });
 
 fs.readdir("./commands/", function (err, data) {
@@ -32,7 +32,7 @@ client.on("message", function (o) {
             var c = require("./commands/" + r + ".js");
             var res = c.execute(client, o, e, { cmds: CMDS });
         } catch(e) {
-
+            console.log(e);
         }
     }
 });
@@ -52,7 +52,7 @@ for (i = 0; i < events.length; i++) {
                 var otherdata = { cmds: CMDS };
                 require("./data/core/events/" + ev + ".js").execute(client, otherdata, a, b, c, d, e, f, g);
             } catch (e) {
-                //Log for debug :("Error occured: "+e)
+                console.log("Error occured: "+e)
             }
         });
         //Log for debug :("Loaded " + events[i]);

@@ -31,7 +31,7 @@ module.exports.senttodms = (type) => {
     }
 }
 
-module.exports.success = (type, chan) => {
+module.exports.success = (type, chan, ammount) => {
     if (type == "setlogs") {
         var e = new disc.RichEmbed();
         e.setTitle(":white_check_mark: Logs channel has been set.");
@@ -40,5 +40,33 @@ module.exports.success = (type, chan) => {
 
         e.setColor("GREEN");
         return e;
+    } else if (type == "purge") {
+        var e = new disc.RichEmbed();
+        e.setDescription(":white_check_mark: Successfuly deleted " + ammount + " messages in " + chan);
+        e.setColor("GREEN");
+        return e;
     }
+}
+
+module.exports.badArgs = (message, missarg, usage) => {
+    var e = new disc.RichEmbed();
+    e.setTitle(":x: Bad arguments!");
+    e.setDescription("You are missing the argument '" + missarg + "'.\nPlease use it like: " + usage);
+    e.setColor("RED");
+    return e;
+}
+
+module.exports.onlyguild = () => {
+    var e = new disc.RichEmbed();
+    e.setTitle(":x: This command can only be used in a guild.");
+    e.setColor("RED");
+    return e;
+}
+
+module.exports.noperms = (missingperm) => {
+    var e = new disc.RichEmbed();
+    e.setTitle(":x: Uh oh! I'm missing certain permissions!");
+    e.setDescription("I seem to be missing the '" + missingperm + "' permission\n\nPlease contact the guild owner or administrator to fix this issue.");
+    e.setColor("RED");
+    return e;
 }

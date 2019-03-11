@@ -10,9 +10,9 @@ module.exports.execute = (client, msg, args, odata) => {
     var moderation = "";
     var guild = "";
     var misc = "";
-    //Log for debug :(odata)
+    console.log(odata)
     for (i in odata.cmds) {
-        //Log for debug :(odata.cmds[i]);
+        console.log(odata.cmds[i]);
         var command = odata.cmds[i].data.details;
 
         if (command.catagory == 1 && command.hidden != true) {
@@ -26,7 +26,7 @@ module.exports.execute = (client, msg, args, odata) => {
         }
 
         if (i > odata.cmds.length || i == odata.cmds.length || i == odata.cmds.length - 1) {
-            //Log for debug :("Finished.")
+            console.log("Finished.")
             if (general == "") {
                 general = "None registered.";
             }
