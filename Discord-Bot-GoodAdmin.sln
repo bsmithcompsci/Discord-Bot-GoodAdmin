@@ -13,6 +13,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Module-Administrative", "Mo
 EndProject
 Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "GoodAdminJS", "GoodAdminJS\GoodAdminJS.njsproj", "{9E986F36-9F15-4A17-BA9D-EC3176C88D27}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Module-GameManager", "Module-FiveM\Module-GameManager.csproj", "{B9F84126-85B5-4198-A300-12F531BEDC5F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiscordMVC.net", "DiscordMVC.net\DiscordMVC.net.csproj", "{0968EEA0-9694-4B50-BEAA-76BBD818D0FB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +43,14 @@ Global
 		{9E986F36-9F15-4A17-BA9D-EC3176C88D27}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9E986F36-9F15-4A17-BA9D-EC3176C88D27}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9E986F36-9F15-4A17-BA9D-EC3176C88D27}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B9F84126-85B5-4198-A300-12F531BEDC5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B9F84126-85B5-4198-A300-12F531BEDC5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B9F84126-85B5-4198-A300-12F531BEDC5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B9F84126-85B5-4198-A300-12F531BEDC5F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0968EEA0-9694-4B50-BEAA-76BBD818D0FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0968EEA0-9694-4B50-BEAA-76BBD818D0FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0968EEA0-9694-4B50-BEAA-76BBD818D0FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0968EEA0-9694-4B50-BEAA-76BBD818D0FB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

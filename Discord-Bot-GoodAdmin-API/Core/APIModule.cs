@@ -7,6 +7,6 @@ namespace GoodAdmin_API
     /// </summary>
     public interface APIModule
     {
-        Task Load();
+        Task Load(Discord.WebSocket.DiscordSocketClient client);
     }
 }

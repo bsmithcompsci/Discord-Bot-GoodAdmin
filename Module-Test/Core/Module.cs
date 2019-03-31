@@ -7,7 +7,7 @@ namespace Module_Test
     public class Module : APIModule
     {
         // Sync
-        public Task Load()
+        public Task Load(Discord.WebSocket.DiscordSocketClient client)
         {
             return Task.CompletedTask;
         }

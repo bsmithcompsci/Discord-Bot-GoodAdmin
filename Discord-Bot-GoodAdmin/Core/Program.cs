@@ -1,15 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using GoodAdmin.Core.API;
 using GoodAdmin.Core.Handlers;
-using Microsoft.Extensions.DependencyInjection;
+using GoodAdmin_API.Core;
+using GoodAdmin_API.Core.Database;
+using GoodAdmin_API.Core.Controllers;
+using System.Threading;
+using System.Timers;
 
 namespace GoodAdmin.Core
 {
@@ -65,44 +66,88 @@ namespace GoodAdmin.Core
                 - Operation Controls: Start, Stop, Restart
                 - Execute Commands into Service
     */
+    // Invite Key : https://discordapp.com/oauth2/authorize?client_id=542208147385876480&scope=bot&permissions=8
     public class Program
     {
         public static DiscordSocketClient client;
         public static CommandService commands;
         public static IServiceProvider services;
-        public static Database database;
+
+        public delegate Task TickDelegate(float delta);
+        public event TickDelegate Tick;
+
+        public float UIUpdateDifference = 2.0f;
+        
+        private float lastUIUpdate = 0.0f;
 
         private async Task MainAsync()
         {
             // Initialization
              client = new DiscordSocketClient();
+            
+            // Channel Handler stuff \\
+            client.MessageReceived      += ChannelHandler.ReceivedMessage;
+            client.MessageDeleted       += ChannelHandler.RemovedMessage;
+            client.MessageUpdated       += ChannelHandler.EditedMessage;
+            client.ChannelCreated       += ChannelHandler.CreatedChannel;
+            client.ChannelDestroyed     += ChannelHandler.RemovedChannel;
+            client.ChannelUpdated       += ChannelHandler.EditedChannel;
+
+            client.Ready                += Client_Ready;
+
+            // Guild Handler Stuff \\
+            client.JoinedGuild          += GuildHandler.JoinedGuild;
+            client.LeftGuild            += GuildHandler.LeftGuild;
 
             // EVENT REGISTRES \\
             client.MessageReceived += MessageHandler.HandleMessage;
-            client.Ready += Client_Ready;
-            client.JoinedGuild += GuildHandler.JoinedGuild;
-            client.LeftGuild += GuildHandler.LeftGuild;
-            
-            // EVENTS: Logging...
-            client.Log += Client_Log;
 
+            // EVENTS: Logging...
+            client.Log                  += Client_Log;
+
+            // UI Updater
+            Tick += GameUIDisplayUpdater;
 
             commands = new CommandService();
             services = new ServiceCollection().BuildServiceProvider();
+            GlobalInit.Init();
+
 
             // Load Configurations and Modules \\
-            await Config.LoadGlobalConfig();
-            await Database.Connect();
-            await MessageHandler.InstallModules();
-            
+            await SQL.Verify("localdb");
+            await Configuration.LoadGlobalConfig();
+            await ModuleHandler.InstallModules();
+
             // Start the Discord Bot \\
-            await client.LoginAsync(TokenType.Bot, Config.config.TOKEN);
+            await client.LoginAsync(TokenType.Bot, Configuration.globalConfig.TOKEN);
             await client.StartAsync();
 
-            // Prevents the application from closing.
+            System.Timers.Timer timer = new System.Timers.Timer(1000);
+            timer.Elapsed += Timer_Elapsed;
+            timer.AutoReset = true;
+            timer.Enabled = true;
+            
             await Task.Delay(-1);
         }
 
+        private void Timer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            Tick?.Invoke(1);
+        }
+
+        private async Task GameUIDisplayUpdater(float delta)
+        {
+            if (lastUIUpdate >= UIUpdateDifference)
+            {
+                await client.SetGameAsync(name: Configuration.globalConfig.PREFIX + $"help | {Configuration.guildConfigs.Count} guilds", type: ActivityType.Listening);
+
+                lastUIUpdate = 0.0f;
+            }
+            else
+            {
+                lastUIUpdate += delta;
+            }
+        }
 
         private Task Client_Log(LogMessage msg)
         {
@@ -110,13 +155,11 @@ namespace GoodAdmin.Core
             return Task.CompletedTask;
         }
 
-        private Task Client_Ready()
+        private async Task Client_Ready()
         {
             Console.WriteLine("GoodAdmin is ready to Administrate!");
 
-            client.SetGameAsync(name: Config.config.PREFIX+"help | Ready!", type: ActivityType.Listening);
-
-            return Task.CompletedTask;
+            await Configuration.LoadGlobalGuildConfigs(client);
         }
 
         // Runner Function - Ignore

@@ -20,7 +20,7 @@ namespace Module_Administrative
             IEnumerable<IMessage> messages = await Context.Channel.GetMessagesAsync((int)amount + 1).FlattenAsync();
             await ((ITextChannel)Context.Channel).DeleteMessagesAsync(messages);
 
-            IUserMessage msg = await ReplyAsync("Deleted **" + messages.Count() + "** messages from the channel.");
+            IUserMessage msg = await ReplyAsync(":boom: Deleted **" + messages.Count() + "** messages from the channel.");
             await Task.Delay(5 * 1000);
             await msg.DeleteAsync();
         }
