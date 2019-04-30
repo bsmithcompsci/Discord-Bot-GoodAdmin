@@ -16,19 +16,23 @@ namespace GoodAdmin.Core.Handlers
             if (msg.Author.IsWebhook) return Task.CompletedTask;
             SocketUserMessage message = msg as SocketUserMessage;
             if (message == null) return Task.CompletedTask;
-            
+
+
             foreach (var controller in GlobalInit.controllerHandler.GetControllers())
             {
-                if (controller is ChannelController)
+                Console.WriteLine(controller);
+                if (controller.GetType() == typeof(ChannelController))
                 {
                     var con = (ChannelController)controller;
-                    if (con.GetInfo().channel.Id == message.Channel.Id)
+                    if (con.GetInfo().channel != null && con.GetInfo().channel.Id == message.Channel.Id)
                     {
+                        Console.WriteLine("Good!");
                         con.InvokeNewMessage(message);
                         break;
                     }
                 }
             }
+            Console.WriteLine("{0}: {1}", message.Author, message.Content);
             return Task.CompletedTask;
         }
 
@@ -39,7 +43,7 @@ namespace GoodAdmin.Core.Handlers
                 if (controller.GetType() == typeof(ChannelController))
                 {
                     var con = (ChannelController)controller;
-                    if (con.GetInfo().channel.Id == channel.Id)
+                    if (con.GetInfo().channel != null && con.GetInfo().channel.Id == channel.Id)
                     {
                         con.InvokeRemovedMessage(messages);
                         break;
@@ -62,7 +66,7 @@ namespace GoodAdmin.Core.Handlers
                 if (controller.GetType() == typeof(ChannelController))
                 {
                     var con = (ChannelController)controller;
-                    if (con.GetInfo().channel.Id == channel.Id)
+                    if (con.GetInfo().channel != null && con.GetInfo().channel.Id == channel.Id)
                     {
                         con.InvokeEditedMessage(message);
                         break;
@@ -85,7 +89,7 @@ namespace GoodAdmin.Core.Handlers
                 if (controller.GetType() == typeof(ChannelController))
                 {
                     var con = (ChannelController)controller;
-                    if (con.GetInfo().channel.Id == channel.Id)
+                    if (con.GetInfo().channel != null && con.GetInfo().channel.Id == channel.Id)
                     {
                         con.InvokeChannelDeleted();
                         GlobalInit.controllerHandler.RemoveController(controller);
@@ -103,7 +107,7 @@ namespace GoodAdmin.Core.Handlers
                 if (controller.GetType() == typeof(ChannelController))
                 {
                     var con = (ChannelController)controller;
-                    if (con.GetInfo().channel.Id == oldchannel.Id)
+                    if (con.GetInfo().channel != null && con.GetInfo().channel.Id == oldchannel.Id)
                     {
                         if (newchannel.GetType() == typeof(ITextChannel))
                             con.InvokeChannelEdited(newchannel);

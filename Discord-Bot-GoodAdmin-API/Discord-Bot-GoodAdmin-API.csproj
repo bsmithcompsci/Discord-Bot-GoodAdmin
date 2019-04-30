@@ -96,6 +96,7 @@
     <Compile Include="Core\Controllers\ControllerHandler.cs" />
     <Compile Include="Core\Controllers\GuildController.cs" />
     <Compile Include="Core\Controllers\IController.cs" />
+    <Compile Include="Core\Controllers\Shared\AgreementChannelController.cs" />
     <Compile Include="Core\Controllers\Shared\SupportChannelController.cs" />
     <Compile Include="Core\Database\Execute.cs" />
     <Compile Include="Core\Database\FetchAll.cs" />
@@ -105,6 +106,7 @@
     <Compile Include="Core\Database\SQL.cs" />
     <Compile Include="Core\GameViewers\FiveM\ServerViewer.cs" />
     <Compile Include="Core\GlobalInit.cs" />
+    <Compile Include="GuildUtils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

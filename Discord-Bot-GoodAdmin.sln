@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Discord-Bot-GoodAdmin", "Di
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Discord-Bot-GoodAdmin-API", "Discord-Bot-GoodAdmin-API\Discord-Bot-GoodAdmin-API.csproj", "{3BDFDA10-C630-484F-A075-9A519761284F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Module-Test", "Module-Test\Module-Test.csproj", "{D9AD3D59-9CCA-4A26-822A-E98456CE07D6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Module-Development", "Module-Test\Module-Development.csproj", "{D9AD3D59-9CCA-4A26-822A-E98456CE07D6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Module-Administrative", "Module-Administrative\Module-Administrative.csproj", "{BEEAE042-B6EC-4C79-A035-0F7FF6B47DAB}"
 EndProject

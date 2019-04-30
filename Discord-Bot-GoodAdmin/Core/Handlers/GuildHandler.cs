@@ -5,8 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using GoodAdmin_API;
 using GoodAdmin_API.Core;
 using GoodAdmin_API.Core.Chat;
+using GoodAdmin_API.Core.Controllers;
 
 namespace GoodAdmin.Core.Handlers
 {
@@ -60,7 +62,9 @@ namespace GoodAdmin.Core.Handlers
             catch { }
             await Embeder.SafeEmbedAsync(embed, guild.Owner, ch, " ");
 
-            await Configuration.CreateGuildConfig(guild);
+            var guildcontroller = new GuildController(guild);
+            await GlobalInit.controllerHandler.AddController(guildcontroller, guild, new object[] { guild });
+            guildcontroller.InvokeInitialize();
         }
 
         /// <summary>
@@ -93,5 +97,97 @@ namespace GoodAdmin.Core.Handlers
 
             await Configuration.RemoveGuildConfig(guild);
         }
+
+        internal static async Task MessageReceived(SocketMessage msg)
+        {
+            //var controller = GuildUtils.GetGuildController(guild);
+
+            //controller.InvokeMessageReceived(msg);
+        }
+
+        internal static async Task MessageDeleted(Cacheable<IMessage, ulong> history, ISocketMessageChannel channel)
+        {
+            //var controller = GuildUtils.GetGuildController(guild);
+
+            //controller.InvokeMessageRemoved();
+        }
+
+        internal static async Task MessageUpdated(Cacheable<IMessage, ulong> history, SocketMessage message, ISocketMessageChannel channel)
+        {
+            //var controller = GuildUtils.GetGuildController(guild);
+
+            //controller.InvokeMessageEdited(user, guild);
+        }
+
+        internal static async Task ChannelCreated(SocketChannel channel)
+        {
+            //var controller = GuildUtils.GetGuildController();
+
+            //controller.InvokeChannelCreated(channel);
+        }
+
+        internal static async Task ChannelDestroyed(SocketChannel channel)
+        {
+            //var controller = GuildUtils.GetGuildController(guild);
+
+            //controller.InvokeChannelRemoved(channel);
+        }
+
+        internal static async Task ChannelUpdated(SocketChannel oldChannel, SocketChannel newChannel)
+        {
+            //var controller = GuildUtils.GetGuildController(guild);
+
+            //controller.InvokeChannelEdited(oldChannel, newChannel);
+        }
+
+        internal static async Task UserBanned(SocketUser user, SocketGuild guild)
+        {
+            //var controller = GuildUtils.GetGuildController(guild);
+
+            //controller.InvokeUserBanned(user, guild);
+        }
+
+        internal static async Task UserUnbanned(SocketUser user, SocketGuild guild)
+        {
+            //var controller = GuildUtils.GetGuildController(guild);
+
+            //controller.InvokeUserUnBanned(user, guild);
+        }
+
+        internal static async Task UserJoined(SocketGuildUser user)
+        {
+            //var controller = GuildUtils.GetGuildController(guild);
+
+            //controller.InvokeUserJoined(user);
+        }
+
+        internal static async Task UserLeft(SocketGuildUser user)
+        {
+            //var controller = GuildUtils.GetGuildController(guild);
+
+            //controller.InvokeUserLeft(user);
+        }
+
+        internal static async Task RoleDeleted(SocketRole role)
+        {
+            //var controller = GuildUtils.GetGuildController(guild);
+
+            //controller.InvokeRoleRemoved(role);
+        }
+
+        internal static async Task RoleUpdated(SocketRole oldRole, SocketRole newRole)
+        {
+            //var controller = GuildUtils.GetGuildController(guild);
+
+            //controller.InvokeRoleEdited(oldRole, newRole);
+        }
+
+        internal static async Task RoleCreated(SocketRole role)
+        {
+            //var controller = GuildUtils.GetGuildController(guild);
+
+            //controller.RoleCreated(role);
+        }
+
     }
 }

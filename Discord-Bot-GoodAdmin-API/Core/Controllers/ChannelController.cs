@@ -39,6 +39,9 @@ namespace GoodAdmin_API.Core.Controllers
         public ChannelController(IChannel channel, ICategoryChannel parent, IGuild guild) => Init(new object[] { channel, parent, guild });
         public void Init(object[] attachment)
         {
+            if (attachment.Length != 3) return;
+            if (attachment[0] != null || attachment[1] != null || attachment[2] != null) return;
+            Console.WriteLine("Loading Channel Controller | {0} | {1} | {2}", attachment[0], attachment[1], attachment[2]);
             info = new ChannelControllerStruct()
             {
                 channel = (IChannel)attachment[0],

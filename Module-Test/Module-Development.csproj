@@ -7,8 +7,8 @@
     <ProjectGuid>{D9AD3D59-9CCA-4A26-822A-E98456CE07D6}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Module_Test</RootNamespace>
-    <AssemblyName>Module-Test</AssemblyName>
+    <RootNamespace>Module_Development</RootNamespace>
+    <AssemblyName>Module-Development</AssemblyName>
     <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>

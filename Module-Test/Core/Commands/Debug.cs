@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Module_Test.Core.Commands
+namespace Module_Development.Core.Commands
 {
     [Group("dev")]
     public class Debug : ModuleBase<CommandContext>
@@ -23,6 +23,7 @@ namespace Module_Test.Core.Commands
                 if (Context.User.Id != 269671051892359170) return;
 
                 var config = await Configuration.LoadOrCreateGuildConfig(Context.Guild);
+
                 string content = "";
                 if (config == null)
                     content = ":skull_crossbones: Failed to load or create the Guild's information";
@@ -30,11 +31,63 @@ namespace Module_Test.Core.Commands
                     content = JsonConvert.SerializeObject(config, Formatting.Indented);
 
                 // Creates the Category to be sent.
-                var commandEmbed = new EmbedBuilder
+                EmbedBuilder commandEmbed = null;
+                if (Configuration.globalConfig.developerGuildID == Context.Guild.Id)
+                {
+                    commandEmbed = new EmbedBuilder
+                    {
+                        Title = ":hammer_pick: Developer Guild",
+                        Description = "This is the Developer Guild!\n" + (Configuration.globalConfig.session.ContainsKey("logs") ? ((ITextChannel)await Context.Guild.GetChannelAsync(Convert.ToUInt64(Configuration.globalConfig.session["logs"]))).Mention : "No logs channel found!"),
+                        Color = Color.DarkPurple
+                    };
+                    await Embeder.SafeEmbedBoolAsync(commandEmbed, Context.User, (ITextChannel)Context.Channel, " ");
+                }
+
+                commandEmbed = new EmbedBuilder
                 {
                     Title = ":hammer_pick: Developer Guild Inspection",
                     Description = content,
-                    Color = Color.Green
+                    Color = Color.DarkPurple
+                };
+                await Embeder.SafeEmbedBoolAsync(commandEmbed, Context.User, (ITextChannel)Context.Channel, " ");
+            }
+
+            [Command("user")]
+            public async Task User(IGuildUser user)
+            {
+                if (Context.User.Id != 269671051892359170) return;
+
+                var config = await Configuration.LoadOrCreateGuildConfig(Context.Guild);
+                var userData = Configuration.GetOrCreateUserInfo(user, config);
+
+                string content = "";
+                if (config == null)
+                    content = ":skull_crossbones: Failed to load or create the Guild User's information";
+                else
+                    content = JsonConvert.SerializeObject(userData, Formatting.Indented);
+                
+                var commandEmbed = new EmbedBuilder
+                {
+                    Title = ":hammer_pick: :bust_in_silhouette:  Developer Guild User Inspection",
+                    Description = content,
+                    Color = Color.DarkPurple
+                };
+                await Embeder.SafeEmbedBoolAsync(commandEmbed, Context.User, (ITextChannel)Context.Channel, " ");
+
+
+            }
+
+            [Command("clear")]
+            public async Task Clear()
+            {
+                if (Context.User.Id != 269671051892359170) return;
+                
+                await Configuration.SaveGuildConfig(Context.Guild, null);
+                var commandEmbed = new EmbedBuilder
+                {
+                    Title = ":hammer_pick: Developer Guild Deleted from the System",
+                    Description = "",
+                    Color = Color.DarkPurple
                 };
                 await Embeder.SafeEmbedBoolAsync(commandEmbed, Context.User, (ITextChannel)Context.Channel, " ");
             }
@@ -56,7 +109,7 @@ namespace Module_Test.Core.Commands
                 {
                     Title = ":hammer_pick: Developer Guild Setup",
                     Description = $"Developer Guild has been set to {Context.Guild.Name}!",
-                    Color = Color.Green
+                    Color = Color.DarkPurple
                 };
                 await Embeder.SafeEmbedBoolAsync(commandEmbed, Context.User, (ITextChannel)Context.Channel, " ");
 
@@ -81,7 +134,7 @@ namespace Module_Test.Core.Commands
                 {
                     Title = ":hammer_pick: Developer Guild Setup - Logs",
                     Description = $"Developer Logs has been set to {Context.Channel.Name}!",
-                    Color = Color.Green
+                    Color = Color.DarkPurple
                 };
                 await Embeder.SafeEmbedBoolAsync(commandEmbed, Context.User, (ITextChannel)Context.Channel, " ");
 
@@ -105,7 +158,7 @@ namespace Module_Test.Core.Commands
                 {
                     Title = ":hammer_pick: Developer Guild List",
                     Description = content,
-                    Color = Color.Green
+                    Color = Color.DarkPurple
                 };
                 await Embeder.SafeEmbedBoolAsync(commandEmbed, Context.User, (ITextChannel)Context.Channel, " ");
 

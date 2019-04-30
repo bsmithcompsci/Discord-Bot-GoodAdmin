@@ -84,7 +84,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Core\Commands\Chat.cs" />
+    <Compile Include="Core\Commands\Moderatoration.cs" />
     <Compile Include="Core\Commands\Ticket.cs" />
+    <Compile Include="Core\Commands\Warn.cs" />
     <Compile Include="Core\Module.cs" />
     <Compile Include="Core\Commands\Purge.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

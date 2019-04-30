@@ -1,4 +1,6 @@
-﻿using GoodAdmin_API.Core.Database;
+﻿using Discord;
+using Discord.Commands;
+using GoodAdmin_API.Core.Database;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,20 +13,30 @@ namespace GoodAdmin_API.Core
     {
         public static Controllers.ControllerHandler controllerHandler;
 
+        public delegate Task SetupDelegate(CommandContext Context, GuildConfig config);
+        public static event SetupDelegate Setup;
+
         public static void Init()
         {
             controllerHandler = new Controllers.ControllerHandler();
         }
 
-        private async Task test()
+        public static async Task InvokeSetup(CommandContext Context, GuildConfig config)
         {
-            int uid = 1;
-            await SQL.ExecuteAsync($"SELECT * FROM mytable WHERE uid=@uid", (x) => { }, new List<System.Data.SQLite.SQLiteParameter>() {
-                new System.Data.SQLite.SQLiteParameter() {
-                    ParameterName = "@uid",
-                    Value = uid
-            } });
-            // SELECT * FROM mytable WHERE uid=1; //DELETE DATABASES;
+            if (Setup == null) return;
+            try
+            {
+                /*
+                IAsyncResult result = Setup.BeginInvoke(Context, config, null, null);
+                if (result != null)
+                    return await Setup.EndInvoke(result);
+                */
+                await Setup.Invoke(Context, config);
+            } catch(Exception ex) {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Failed Module["+ ex.Source +"] Setup :: "+ ex.Message +" \n" + ex.StackTrace);
+                Console.ResetColor();
+            }
         }
 
     }

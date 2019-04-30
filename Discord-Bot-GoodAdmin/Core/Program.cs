@@ -84,7 +84,10 @@ namespace GoodAdmin.Core
         {
             // Initialization
              client = new DiscordSocketClient();
-            
+
+            // Client Events
+            client.Ready += Client_Ready;
+
             // Channel Handler stuff \\
             client.MessageReceived      += ChannelHandler.ReceivedMessage;
             client.MessageDeleted       += ChannelHandler.RemovedMessage;
@@ -92,10 +95,22 @@ namespace GoodAdmin.Core
             client.ChannelCreated       += ChannelHandler.CreatedChannel;
             client.ChannelDestroyed     += ChannelHandler.RemovedChannel;
             client.ChannelUpdated       += ChannelHandler.EditedChannel;
-
-            client.Ready                += Client_Ready;
+            
 
             // Guild Handler Stuff \\
+            client.MessageReceived      += GuildHandler.MessageReceived;
+            client.MessageDeleted       += GuildHandler.MessageDeleted;
+            client.MessageUpdated       += GuildHandler.MessageUpdated;
+            client.ChannelCreated       += GuildHandler.ChannelCreated;
+            client.ChannelDestroyed     += GuildHandler.ChannelDestroyed;
+            client.ChannelUpdated       += GuildHandler.ChannelUpdated;
+            client.UserBanned           += GuildHandler.UserBanned;
+            client.UserJoined           += GuildHandler.UserJoined;
+            client.UserLeft             += GuildHandler.UserLeft;
+            client.UserUnbanned         += GuildHandler.UserUnbanned;
+            client.RoleCreated          += GuildHandler.RoleCreated;
+            client.RoleDeleted          += GuildHandler.RoleDeleted;
+            client.RoleUpdated          += GuildHandler.RoleUpdated;
             client.JoinedGuild          += GuildHandler.JoinedGuild;
             client.LeftGuild            += GuildHandler.LeftGuild;
 
@@ -107,12 +122,12 @@ namespace GoodAdmin.Core
 
             // UI Updater
             Tick += GameUIDisplayUpdater;
+            Tick += DataControllersHandler;
 
             commands = new CommandService();
             services = new ServiceCollection().BuildServiceProvider();
             GlobalInit.Init();
-
-
+            
             // Load Configurations and Modules \\
             await SQL.Verify("localdb");
             await Configuration.LoadGlobalConfig();
@@ -147,6 +162,15 @@ namespace GoodAdmin.Core
             {
                 lastUIUpdate += delta;
             }
+        }
+
+
+        private async Task DataControllersHandler(float delta)
+        {
+            foreach (var controller in GlobalInit.controllerHandler.GetControllers())
+                if (controller is GuildController con)
+                    con.InvokeTick();
+            await Task.Delay(1);
         }
 
         private Task Client_Log(LogMessage msg)

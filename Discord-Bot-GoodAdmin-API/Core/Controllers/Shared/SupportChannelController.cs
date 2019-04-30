@@ -24,6 +24,7 @@ namespace GoodAdmin_API.Core.Controllers.Shared
         public IUser author;
         public TicketStatus status;
         public List<IUser> assigned;
+        public List<IUser> assignedHistory;
         public DateTime dateTime;
     }
 
@@ -35,6 +36,7 @@ namespace GoodAdmin_API.Core.Controllers.Shared
         public ulong authorUID;
         public uint statusUID;
         public List<ulong> assignedUIDs;
+        public List<ulong> assignedHistoryUIDs;
         public long dateTime;
     }
 
@@ -100,6 +102,7 @@ namespace GoodAdmin_API.Core.Controllers.Shared
                         channel = ticketChannel,
                         status = TicketStatus.Open,
                         assigned = new List<IUser>(),
+                        assignedHistory = new List<IUser>(),
                         dateTime = DateTime.Now
                     });
                     
@@ -114,6 +117,7 @@ namespace GoodAdmin_API.Core.Controllers.Shared
                             channelUID = ticketChannel.Id,
                             statusUID = (uint)TicketStatus.Open.GetHashCode(),
                             assignedUIDs = new List<ulong>(),
+                            assignedHistoryUIDs = new List<ulong>(),
                             dateTime = DateTime.Now.ToBinary()
                         });
                         await Configuration.SaveGuildConfig(info.guild, config);
@@ -138,10 +142,65 @@ namespace GoodAdmin_API.Core.Controllers.Shared
             }
         }
 
+        public static async Task<IRole> GetSupportTeam(IGuild guild)
+        {
+            var config = await Configuration.LoadOrCreateGuildConfig(guild);
+            ulong id = 0;
+            
+            try
+            {
+                id = Convert.ToUInt64(config.session["roles-support-team"]);
+                return guild.GetRole(id);
+            }
+            catch { }
+
+            return null;
+        }
+
+        public static async Task<IGuildChannel> GetSupportChatChannel(IGuild guild)
+        {
+            var config = await Configuration.LoadOrCreateGuildConfig(guild);
+
+            if (!config.session.ContainsKey("support-chat"))
+                return null;
+
+            return await guild.GetChannelAsync(Convert.ToUInt64(config.session["support-chat"]));
+        }
+
+        public static async Task<IGuildChannel> GetSupportTicketChannel(IGuild guild)
+        {
+            var config = await Configuration.LoadOrCreateGuildConfig(guild);
+
+            if (!config.session.ContainsKey("support-channel"))
+                return null;
+
+            return await guild.GetChannelAsync(Convert.ToUInt64(config.session["support-channel"]));
+        }
+
+        public static async Task<IGuildChannel> GetSupportTicketLogsChannel(IGuild guild)
+        {
+            var config = await Configuration.LoadOrCreateGuildConfig(guild);
+
+            if (!config.session.ContainsKey("ticket-logging-channel"))
+                return null;
+
+            return await guild.GetChannelAsync(Convert.ToUInt64(config.session["ticket-logging-channel"]));
+        }
+
+        public static async Task<IGuildChannel> GetSupportTicketSurveyLogsChannel(IGuild guild)
+        {
+            var config = await Configuration.LoadOrCreateGuildConfig(guild);
+
+            if (!config.session.ContainsKey("ticket-survey-logging-channel"))
+                return null;
+
+            return await guild.GetChannelAsync(Convert.ToUInt64(config.session["ticket-survey-logging-channel"]));
+        }
+
         public static async Task SaveTickets(IGuild guild)
         {
-            var config = await Configuration.LoadOrCreateGuildConfig(info.guild);
-
+            var config = await Configuration.LoadOrCreateGuildConfig(guild);
+            if (config == null) return;
             config.tickets.Clear();
             foreach (var ticket in GetGuildTickets(guild))
             {
@@ -161,7 +220,7 @@ namespace GoodAdmin_API.Core.Controllers.Shared
                 });
             }
 
-            await Configuration.SaveGuildConfig(info.guild, config);
+            await config.Save(guild);
         }
 
         public static bool CanCreateNewTicket(IGuild guild, IUser user)

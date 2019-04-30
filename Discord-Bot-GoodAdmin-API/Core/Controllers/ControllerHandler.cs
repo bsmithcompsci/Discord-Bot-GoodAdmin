@@ -1,7 +1,5 @@
-﻿using System;
+﻿using Discord;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace GoodAdmin_API.Core.Controllers
@@ -20,6 +18,19 @@ namespace GoodAdmin_API.Core.Controllers
         {
             controllers.Add(controller);
             addedController?.Invoke(controller);
+        }
+        public async Task AddController(IController controller, IGuild guild, params object[] args)
+        {
+            AddController(controller);
+
+            object[] kwargs = new object[args.Length + 1];
+            kwargs[0] = controller.GetType();
+            for (var i = 0; i < args.Length; i++)
+                kwargs[i + 1] = args[i];
+
+            var cfg = await Configuration.LoadOrCreateGuildConfig(guild);
+            cfg.controllers.Add(kwargs);
+            await cfg.Save(guild);
         }
         public void RemoveController(IController controller) {
             controllers.Remove(controller);

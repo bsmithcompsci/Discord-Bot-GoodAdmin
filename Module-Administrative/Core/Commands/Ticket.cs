@@ -15,7 +15,7 @@ namespace Module_Administrative.Core.Commands
     public class Ticket : ModuleBase<CommandContext>
     {
         // open #id
-        [Command("open"), RequireUserPermission(GuildPermission.ManageMessages), RequireBotPermission(GuildPermission.ManageMessages), Remarks("Ticket")]
+        [Command("open"), Summary("Opens a Ticket. `!ticket open <id>`"), RequireUserPermission(GuildPermission.ManageMessages), RequireBotPermission(GuildPermission.ManageMessages), Remarks("Ticket")]
         public async Task OpenAsync(uint id)
         {
             var ticket = SupportChannelController.GetTicketByID(Context.Guild, id);
@@ -36,8 +36,24 @@ namespace Module_Administrative.Core.Commands
                     else
                         await Embeder.SafeEmbedAsync(embed, (ITextChannel)Context.Channel);
 
+                    if (Context.Channel.Id != ticket.channel.Id)
+                    {
+                        var confirmation = await Embeder.SafeEmbedAsync(embed, (ITextChannel)Context.Channel);
+
+                        Thread t = new Thread(async () => {
+                            try
+                            {
+                                await Task.Delay(5000);
+                                await confirmation.DeleteAsync();
+                            }
+                            catch { }
+                        });
+                        t.Start();
+                    }
+
                     ticket.status = TicketStatus.Active;
                     ticket.assigned.Add(Context.User);
+                    ticket.assignedHistory.Add(Context.User);
 
                     await SupportChannelController.SaveTickets(Context.Guild);
 
@@ -48,7 +64,7 @@ namespace Module_Administrative.Core.Commands
         }
 
         // delete <#id>
-        [Command("delete"), RequireUserPermission(GuildPermission.Administrator), RequireBotPermission(GuildPermission.Administrator), Remarks("Ticket")]
+        [Command("delete"), Summary("Deletes a Ticket. `!ticket delete <id>`"), RequireUserPermission(GuildPermission.Administrator), RequireBotPermission(GuildPermission.Administrator), Remarks("Ticket")]
         public async Task DeleteAsync(uint? id = null)
         {
             GuildTicket ticket = null;
@@ -74,6 +90,21 @@ namespace Module_Administrative.Core.Commands
                     else
                         await Embeder.SafeEmbedAsync(embed, (ITextChannel)Context.Channel);
 
+                    if (Context.Channel.Id != ticket.channel.Id)
+                    {
+                        var confirmation = await Embeder.SafeEmbedAsync(embed, (ITextChannel)Context.Channel);
+
+                        Thread t = new Thread(async () => {
+                            try
+                            {
+                                await Task.Delay(5000);
+                                await confirmation.DeleteAsync();
+                            }
+                            catch { }
+                        });
+                        t.Start();
+                    }
+                    
                     Console.WriteLine($"Deleted Ticket #{ticket.id} -> " + SupportChannelController.RemoveGuildTicket(Context.Guild, ticket));
                     await SupportChannelController.SaveTickets(Context.Guild);
 
@@ -87,7 +118,7 @@ namespace Module_Administrative.Core.Commands
         }
 
         // close <#id>
-        [Command("close"), RequireUserPermission(GuildPermission.ManageMessages), RequireBotPermission(GuildPermission.ManageMessages), Remarks("Ticket")]
+        [Command("close"), Summary("Closes a Ticket. `!ticket close <id>`"), RequireUserPermission(GuildPermission.ManageMessages), RequireBotPermission(GuildPermission.ManageMessages), Remarks("Ticket")]
         public async Task CloseAsync(uint? id = null)
         {
             GuildTicket ticket = null;
@@ -125,60 +156,131 @@ namespace Module_Administrative.Core.Commands
                 };
                 if (!string.IsNullOrEmpty(embed.Description))
                     await Embeder.SafeEmbedAsync(embed, ticket.channel);
-                
-                ticket.status = TicketStatus.Closed;
-                ticket.assigned.Clear();
-                await SupportChannelController.SaveTickets(Context.Guild);
 
-                /*
-                try
+                if (Context.Channel.Id != ticket.channel.Id)
                 {
-                    await ticket.channel.RemovePermissionOverwriteAsync(ticket.author);
+                    var confirmation = await Embeder.SafeEmbedAsync(embed, (ITextChannel)Context.Channel);
+
+                    Thread t = new Thread(async () => {
+                        try
+                        {
+                            await Task.Delay(5000);
+                            await confirmation.DeleteAsync();
+                        }
+                        catch { }
+                    });
+                    t.Start();
                 }
-                catch { }
-                */
+
+                ticket.status = TicketStatus.Closed;
 
                 foreach (var assigned in ticket.assigned)
                 {
                     try
                     {
+                        Console.WriteLine(assigned.Username + " has been removed from Ticket #" + ticket.id + " - Ticket Closed!");
                         await ticket.channel.RemovePermissionOverwriteAsync(assigned);
                     }
                     catch { }
                 }
+                ticket.assigned.Clear();
+                await SupportChannelController.SaveTickets(Context.Guild);
 
-                Thread t = new Thread(async () => {
+                Thread t2 = new Thread(async () => {
                     try
                     {
                         await Task.Delay(300000);
                         await ticket.channel.DeleteAsync();
                     } catch { }
                 });
-                t.Start();
+                t2.Start();
             }
         }
 
         // survey #id
-        [Command("survey"), Remarks("Ticket")]
-        public async Task SurveyAsync(string msg)
+        [Command("survey"), Summary("Submits a survey about the ticket."), Remarks("Ticket")]
+        public async Task SurveyAsync([Remainder] string msg)
         {
             var ticket = SupportChannelController.GetChannelTicket(Context.Guild, Context.Channel);
+            var surveyChannel = await SupportChannelController.GetSupportTicketSurveyLogsChannel(Context.Guild);
 
             if (ticket != null)
             {
-                var embed = new EmbedBuilder()
+                // Stop Support Team and added individuals from submitting the survey for the creator...
+                if (ticket.author.Id != Context.User.Id)
                 {
-                    Title = $@":clipboard: Ticket #{ticket.id} - Survey Submitted Anonymously",
-                    Description = "Thank you for providing our staff with preformance information, we hope you have a great day. :smile:",
-                    Color = Color.Green
-                };
-                if (!string.IsNullOrEmpty(embed.Description))
-                    await Embeder.SafeEmbedAsync(embed, ticket.channel);
+                    var embed = new EmbedBuilder()
+                    {
+                        Title = $@":clipboard: Ticket #{ticket.id} - Survey",
+                        Description = "Sorry, you are not the creator of this ticket, therefore it's the creator's right to create the survey.\n\nThank you, and have a great day. :smile:",
+                        Color = Color.Green
+                    };
+                    if (!string.IsNullOrEmpty(embed.Description))
+                        await Embeder.SafeEmbedAsync(embed, ticket.channel);
+
+                    return;
+                }
+
+                // Wait until the ticket is closed...
+                if (ticket.status == TicketStatus.Closed)
+                {
+                    var embed = new EmbedBuilder()
+                    {
+                        Title = $@":clipboard: Ticket #{ticket.id} - Survey Submitted Anonymously",
+                        Description = "Thank you for providing our staff with preformance information, we hope you have a great day. :smile:",
+                        Color = Color.Green
+                    };
+                    if (!string.IsNullOrEmpty(embed.Description))
+                        await Embeder.SafeEmbedAsync(embed, ticket.channel);
+
+                    var mentionsOfAssigned = "";
+                    foreach (var assigned in ticket.assignedHistory)
+                        mentionsOfAssigned += assigned.Mention + "\n";
+
+                    embed = new EmbedBuilder()
+                    {
+                        Title = $@":clipboard: Ticket Survey #{ticket.id}",
+                        Description = msg,
+                        Fields = new List<EmbedFieldBuilder>()
+                        {
+                            new EmbedFieldBuilder()
+                            {
+                                Name = "First Responder",
+                                Value = ticket.assignedHistory[0]
+                            },
+                            new EmbedFieldBuilder()
+                            {
+                                Name = "Assigned",
+                                Value = mentionsOfAssigned
+                            }
+                        },
+                        Color = Color.Green
+                    };
+                    if (!string.IsNullOrEmpty(embed.Description) && surveyChannel != null)
+                        await Embeder.SafeEmbedAsync(embed, (ITextChannel)surveyChannel);
+
+                    await Task.Run(async () =>
+                    {
+                        await Task.Delay(5000);
+                        await ticket.channel.DeleteAsync();
+                    });
+                }
+                else
+                {
+                    var embed = new EmbedBuilder()
+                    {
+                        Title = $@":clipboard: Ticket #{ticket.id} - Survey",
+                        Description = "Sorry, the support team hasn't closed the ticket with yet. If you have resolved the issue, please formally notify that support team member that you are finished speaking with them.\n\nThank you, and have a great day. :smile:",
+                        Color = Color.Green
+                    };
+                    if (!string.IsNullOrEmpty(embed.Description))
+                        await Embeder.SafeEmbedAsync(embed, ticket.channel);
+                }
             }
         }
 
         // assign #id @mention
-        [Command("assign"), RequireUserPermission(GuildPermission.ManageMessages), RequireBotPermission(GuildPermission.ManageMessages), Remarks("Ticket")]
+        [Command("assign"), Summary("Adds a user to a Ticket. `!ticket assign <id> @username`"), RequireUserPermission(GuildPermission.ManageMessages), RequireBotPermission(GuildPermission.ManageMessages), Remarks("Ticket")]
         public async Task AssignAsync(uint id, IGuildUser user)
         {
             var ticket = SupportChannelController.GetTicketByID(Context.Guild, id);
@@ -205,18 +307,34 @@ namespace Module_Administrative.Core.Commands
                     else
                         await Embeder.SafeEmbedAsync(embed, (ITextChannel)Context.Channel);
 
+                    if (Context.Channel.Id != ticket.channel.Id)
+                    {
+                        var confirmation = await Embeder.SafeEmbedAsync(embed, (ITextChannel)Context.Channel);
+
+                        Thread t = new Thread(async () => {
+                            try
+                            {
+                                await Task.Delay(5000);
+                                await confirmation.DeleteAsync();
+                            }
+                            catch { }
+                        });
+                        t.Start();
+                    }
+
                     var ch = await Context.Guild.GetChannelAsync(ticket.channel.Id);
                     await ch.AddPermissionOverwriteAsync(user, new OverwritePermissions(sendMessages: PermValue.Allow, viewChannel: PermValue.Allow, readMessageHistory: PermValue.Allow, attachFiles: PermValue.Allow));
 
                     Console.WriteLine($"Adding {user.Username} into Ticket #{ticket.id}");
                     ticket.assigned.Add(user);
+                    ticket.assignedHistory.Add(user);
                     await SupportChannelController.SaveTickets(Context.Guild);
                 }
             }
         }
 
         // remove #id @mention
-        [Command("remove"), RequireUserPermission(GuildPermission.ManageMessages), RequireBotPermission(GuildPermission.ManageMessages), Remarks("Ticket")]
+        [Command("remove"), Summary("Removes a user from the Ticket. `!ticket remove <id> @username`"), RequireUserPermission(GuildPermission.ManageMessages), RequireBotPermission(GuildPermission.ManageMessages), Remarks("Ticket")]
         public async Task RemoveAsync(uint id, IGuildUser user)
         {
             var ticket = SupportChannelController.GetTicketByID(Context.Guild, id);
@@ -234,7 +352,7 @@ namespace Module_Administrative.Core.Commands
                     };
                     embed.AddField(new EmbedFieldBuilder()
                     {
-                        Name = "Assigned Person",
+                        Name = "Removed Person",
                         Value = user.Username
                     });
 
@@ -242,7 +360,22 @@ namespace Module_Administrative.Core.Commands
                         await Embeder.SafeEmbedAsync(embed, (ITextChannel)ticketlogs);
                     else
                         await Embeder.SafeEmbedAsync(embed, (ITextChannel)Context.Channel);
-                    
+
+                    if (Context.Channel.Id != ticket.channel.Id)
+                    {
+                        var confirmation = await Embeder.SafeEmbedAsync(embed, (ITextChannel)Context.Channel);
+
+                        Thread t = new Thread(async () => {
+                            try
+                            {
+                                await Task.Delay(5000);
+                                await confirmation.DeleteAsync();
+                            }
+                            catch { }
+                        });
+                        t.Start();
+                    }
+
                     try
                     {
                         await ticket.channel.RemovePermissionOverwriteAsync(user);
@@ -257,10 +390,15 @@ namespace Module_Administrative.Core.Commands
         }
 
         // list
-        [Command("list"), RequireUserPermission(GuildPermission.ManageMessages), RequireBotPermission(GuildPermission.ManageMessages), Remarks("Ticket")]
+        [Command("list"), Summary("Lists all active, open, and closed tickets. `!ticket list`"), RequireUserPermission(GuildPermission.ManageMessages), RequireBotPermission(GuildPermission.ManageMessages), Remarks("Ticket")]
         public async Task ListAsync()
         {
             int maxLength = 400;
+            var embed = new EmbedBuilder()
+            {
+                Title = $@":clipboard: Ticket List"
+            };
+            await Embeder.SafeEmbedAsync(embed, (ITextChannel)Context.Channel);
             foreach (var ticket in SupportChannelController.GetGuildTickets(Context.Guild))
             {
                 var assignedMessage = "";
@@ -270,7 +408,7 @@ namespace Module_Administrative.Core.Commands
                     assignedMessage += $"{assigned.Username}\n";
                 }
 
-                var embed = new EmbedBuilder()
+                embed = new EmbedBuilder()
                 {
                     Title = $@":clipboard: Ticket #{ticket.id} by {ticket.author.Username} `[{ticket.status.ToString()}]`",
                     Description = $"Created Date: {(ticket.dateTime != null ? ticket.dateTime.ToString() : "UNKNOWN")}\nAuthor : {ticket.author.Mention}\nChannel : {ticket.channel.Mention}\nIncluded:\n{assignedMessage}=================\n" + (string.IsNullOrEmpty(ticket.initialMessage) ? "" : ticket.initialMessage.Length <= maxLength ? ticket.initialMessage : ticket.initialMessage.Substring(0, maxLength) + "...")
@@ -281,7 +419,7 @@ namespace Module_Administrative.Core.Commands
         }
 
         // purge
-        [Command("purge"), RequireUserPermission(GuildPermission.Administrator), RequireBotPermission(GuildPermission.Administrator), Remarks("Ticket")]
+        [Command("purge"), Summary("Purges all tickets. `!ticket purge <[onlyClosed = true]>`"), RequireUserPermission(GuildPermission.Administrator), RequireBotPermission(GuildPermission.Administrator), Remarks("Ticket")]
         public async Task PurgeAsync(bool onlyClosed = true)
         {
             foreach (var ticket in SupportChannelController.GetGuildTickets(Context.Guild))
@@ -323,11 +461,23 @@ namespace Module_Administrative.Core.Commands
                 await Embeder.SafeEmbedAsync(embed, (ITextChannel)ticketlogs);
             else
                 await Embeder.SafeEmbedAsync(embed, (ITextChannel)Context.Channel);
+            
+            var confirmation = await Embeder.SafeEmbedAsync(embed, (ITextChannel)Context.Channel);
+
+            Thread t = new Thread(async () => {
+                try
+                {
+                    await Task.Delay(5000);
+                    await confirmation.DeleteAsync();
+                }
+                catch { }
+            });
+            t.Start();
 
             await SupportChannelController.SaveTickets(Context.Guild);
         }
         
-        [Command("greeting"), RequireUserPermission(GuildPermission.ManageMessages), RequireBotPermission(GuildPermission.ManageMessages), Remarks("Ticket")]
+        [Command("greeting"), Summary("Displays a professional greeting to the user."), RequireUserPermission(GuildPermission.ManageMessages), RequireBotPermission(GuildPermission.ManageMessages), Remarks("Ticket")]
         public async Task GreetingAsync()
         {
             var ticket = SupportChannelController.GetChannelTicket(Context.Guild, Context.Channel);

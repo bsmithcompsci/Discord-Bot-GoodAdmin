@@ -62,7 +62,10 @@ namespace GoodAdmin.Core.Handlers
                 IUserMessage mes = null;
 
                 if (devlogs != null && (result.Error == CommandError.Exception || result.Error == CommandError.MultipleMatches || result.Error == CommandError.ObjectNotFound))
+                {
+                    embed.Title += $" [Guild : {context.Guild.Name} | {context.Guild.Id}]";
                     mes = await Embeder.SafeEmbedAsync(embed, (ITextChannel)devlogs, " ");
+                }
                 else
                 {
                     mes = await Embeder.SafeEmbedAsync(embed, (ITextChannel)context.Channel, " ");

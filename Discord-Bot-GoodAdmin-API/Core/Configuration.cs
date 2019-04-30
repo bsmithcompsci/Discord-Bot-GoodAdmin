@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using GoodAdmin_API.Core.Controllers;
 using GoodAdmin_API.Core.Controllers.Shared;
 using GoodAdmin_API.Core.Database;
 using Newtonsoft.Json;
@@ -12,6 +13,7 @@ using System.Threading.Tasks;
 
 namespace GoodAdmin_API.Core
 {
+    [Serializable]
     public class GlobalConfig
     {
         public string TOKEN { get; set; }
@@ -20,18 +22,43 @@ namespace GoodAdmin_API.Core
         public ulong developerGuildID;
 
         public Dictionary<string, object> session = new Dictionary<string, object>();
+
+        public void Save()
+        {
+            Configuration.SaveGlobalConfig();
+        }
     }
 
-    // TODO : Create and Connect a guild system...
+    [Serializable]
     public class GuildConfig
     {
         public Dictionary<string, object> session = new Dictionary<string, object>();
         public List<object[]> controllers = new List<object[]>();
         public List<TicketSimpleStruct> tickets = new List<TicketSimpleStruct>();
+        public List<UserConfig> userConfigs = new List<UserConfig>();
+
+        public async Task Save(IGuild guild)
+        {
+            await Configuration.SaveGuildConfig(guild, this);
+        }
+    }
+
+    [Serializable]
+    public class UserConfig
+    {
+        public ulong uid;
+        public Dictionary<string, object> session = new Dictionary<string, object>();
+
+        public void Save(GuildConfig config)
+        {
+            Configuration.SaveUserConfig(this, config);
+        }
     }
 
     public class Configuration
     {
+        public static string TimeZone = "PST";
+
         public static GlobalConfig globalConfig;
 
         public static Dictionary<IGuild, GuildConfig> guildConfigs = new Dictionary<IGuild, GuildConfig>();
@@ -64,7 +91,6 @@ namespace GoodAdmin_API.Core
 
         public static async Task LoadGlobalGuildConfigs(DiscordSocketClient client)
         {
-
             await SQL.FetchAllAsync("SELECT * FROM guilds", async (rows) => {
                 foreach (var row in rows)
                 {
@@ -93,27 +119,53 @@ namespace GoodAdmin_API.Core
                                 if (GuildConnected(client, guild) && !GuildExists(guild))
                                 {
                                     guildConfigs.Add(guild, json_result);
-                                    Console.WriteLine("Loaded Guild Configurations : " + guild.Name);
+                                    Console.WriteLine("Loaded Guild Configurations : " + guild.Name + (globalConfig.developerGuildID == guild.Id ? " {[Developer Guild]}" : ""));
 
-                                    foreach (var controller in json_result.controllers.ToArray())
+                                    foreach (object[] controller in json_result.controllers.ToArray())
                                     {
+                                        // Issue #1 : Controller issue.
                                         if (controller.Length == 4 && controller[0].ToString() == (new SupportChannelController(null, null, null, supportTeam: null)).ToString())
                                         {
-                                            var ch = guild.GetChannel(Convert.ToUInt64(controller[3]));
+                                            var ch = guild.GetChannel(Convert.ToUInt64(controller[3].ToString()));
                                             if (ch != null)
                                             {
                                                 var newController = new SupportChannelController(
                                                     ch,
-                                                    (ICategoryChannel)guild.GetChannel(Convert.ToUInt64(controller[2])),
+                                                    (ICategoryChannel)guild.GetChannel(Convert.ToUInt64(controller[2].ToString())),
                                                     guild,
-                                                    guild.GetRole(Convert.ToUInt64(json_result.session["roles-support_team"]))
+                                                    await SupportChannelController.GetSupportTeam(guild)
                                                 );
 
                                                 GlobalInit.controllerHandler.AddController(newController);
-                                                Console.WriteLine("Loaded Guild Configurations - Controllers["+ controller[0] +"] :: " + ch.Name);
+                                                Console.WriteLine("Loaded Guild Configurations - Controller["+ controller[0].ToString().Split('.').Last() + "] :: " + ch.Name);
                                             }
                                         }
+                                        /*
+                                        if (controller.Length == 4 && controller[0].ToString() == (new AgreementChannelController(null, null, null)).ToString())
+                                        {
+                                            var ch = guild.GetChannel(Convert.ToUInt64(controller[3].ToString()));
+                                            if (ch != null)
+                                            {
+                                                var newController = new AgreementChannelController(
+                                                    ch,
+                                                    (ICategoryChannel)guild.GetChannel(Convert.ToUInt64(controller[2].ToString())),
+                                                    guild
+                                                );
+
+                                                GlobalInit.controllerHandler.AddController(newController);
+                                                Console.WriteLine("Loaded Guild Configurations - Controller[" + controller[0].ToString().Split('.').Last() + "] :: " + ch.Name);
+                                            }
+                                        }*/
+
                                     }
+
+                                    var guildController = new GuildController(
+                                        guild
+                                    );
+
+                                    GlobalInit.controllerHandler.AddController(guildController);
+                                    Console.WriteLine("Loaded Guild Configurations - Controller[" + guildController.ToString().Split('.').Last() + "]");
+
 
                                     await LoadGuildTickets(json_config.ToString(), guild);
                                 }
@@ -132,6 +184,7 @@ namespace GoodAdmin_API.Core
         
         public static async Task LoadGuildTickets(string json_config, SocketGuild guild)
         {
+            if (guild == null) return;
             var json_result = JsonConvert.DeserializeObject<GuildConfig>(json_config.ToString());
             foreach (var ticket in json_result.tickets)
             {
@@ -153,6 +206,13 @@ namespace GoodAdmin_API.Core
                         if (user != null)
                             assignedUsers.Add(user);
                     }
+                    var assignedHistoryUsers = new List<IUser>();
+                    foreach (var assigned in ticket.assignedHistoryUIDs)
+                    {
+                        var user = guild.GetUser(assigned);
+                        if (user != null)
+                            assignedHistoryUsers.Add(user);
+                    }
 
 
                     var newTicket = new GuildTicket()
@@ -163,7 +223,8 @@ namespace GoodAdmin_API.Core
                         author = guild.GetUser(ticket.authorUID),
                         status = (TicketStatus)ticket.statusUID,
                         dateTime = DateTime.FromBinary(ticket.dateTime),
-                        assigned = assignedUsers
+                        assigned = assignedUsers,
+                        assignedHistory = assignedHistoryUsers
                     };
 
                     // Delete the tickets that have been closed... And Add the Active or open ones. And Delete old ones, after 1 week... On Load...
@@ -194,8 +255,24 @@ namespace GoodAdmin_API.Core
 
         public static async Task BuildConfigurationDatabase()
         {
-            //await SQL.ExecuteAsync("CREATE TABLE IF NOT EXISTS users (TEXT uid NOT NULL)", (x) => { });
+            //await SQL.ExecuteAsync("CREATE TABLE IF NOT EXISTS users (uid TEXT NOT NULL, guilduid TEXT NOT NULL)", (x) => { }, debug: false);
             await SQL.ExecuteAsync("CREATE TABLE IF NOT EXISTS guilds (uid TEXT NOT NULL, config TEXT NOT NULL)", (x) => { }, debug: false);
+        }
+
+        public static UserConfig GetOrCreateUserInfo(IUser user, GuildConfig guild)
+        {
+            foreach (UserConfig cfg in guild.userConfigs)
+                if (cfg.uid == user.Id)
+                    return cfg;
+
+            UserConfig usercfg = new UserConfig()
+            {
+                session = new Dictionary<string, object>(),
+                uid = user.Id
+            };
+            guild.userConfigs.Add(usercfg);
+
+            return usercfg;
         }
 
         /// <summary>
@@ -208,9 +285,10 @@ namespace GoodAdmin_API.Core
             return Task.Run(async () =>
             {
                 GuildConfig result = null;
+                if (guild == null) return null;
                 Parallel.ForEach(guildConfigs, (cfg) =>
                 {
-                    Console.WriteLine($"{cfg.Key.Id} | {cfg.Value.session.Count}");
+                    //Console.WriteLine($"{cfg.Key.Id} | {cfg.Value.session.Count}");
                     if (cfg.Key.Id == guild.Id)
                     {
                         result = cfg.Value;
@@ -226,7 +304,6 @@ namespace GoodAdmin_API.Core
                             bool found = false;
                             foreach (KeyValuePair<string, object> col in row)
                             {
-                                Console.WriteLine(col.Value);
                                 found = true;
                                 break;
                             }
@@ -238,16 +315,23 @@ namespace GoodAdmin_API.Core
                     {
                         new System.Data.SQLite.SQLiteParameter() { ParameterName = "@uid", Value = guild.Id }
                     });
-
-                    // Else Create new Data
-                    if (result == null)
-                    {
-                        result = await CreateGuildConfig(guild);
-                    }
                 }
-
-                return result;
+                // Else Create new Data
+                if (result == null)
+                    return await CreateGuildConfig(guild);
+                else
+                    return result;
             });
+        }
+        
+        public static void SaveUserConfig(UserConfig usercfg, GuildConfig config)
+        {
+            for(var i = 0; i < config.userConfigs.Count; i++)
+                if(config.userConfigs[i].uid == usercfg.uid)
+                {
+                    config.userConfigs[i] = usercfg;
+                    break;
+                }
         }
 
         /// <summary>
@@ -258,7 +342,7 @@ namespace GoodAdmin_API.Core
         /// <returns></returns>
         public static async Task SaveGuildConfig(IGuild guild, GuildConfig config)
         {
-            if (guildConfigs.ContainsKey(guild))
+            //if (guildConfigs.ContainsKey(guild))
                 guildConfigs[guild] = config;
 
             await SQL.ExecuteAsync(
@@ -276,30 +360,30 @@ namespace GoodAdmin_API.Core
             GuildConfig result = null;
             await SQL.ExecuteAsync("INSERT INTO guilds (uid, config) VALUES (@uid, @config)", (x) => { },
                 new List<System.Data.SQLite.SQLiteParameter>() {
-                                new System.Data.SQLite.SQLiteParameter() { ParameterName = "@uid", Value = guild.Id },
-                                new System.Data.SQLite.SQLiteParameter() { ParameterName = "@config", Value = JsonConvert.SerializeObject(new GuildConfig())}
+                    new System.Data.SQLite.SQLiteParameter() { ParameterName = "@uid", Value = guild.Id },
+                    new System.Data.SQLite.SQLiteParameter() { ParameterName = "@config", Value = JsonConvert.SerializeObject(new GuildConfig())}
                 }
             );
 
             await SQL.FetchAllAsync("SELECT config FROM guilds WHERE uid=@uid", (x) =>
-            {
-                foreach (var row in x)
                 {
-                    bool found = false;
-                    foreach (KeyValuePair<string, object> col in row)
+                    foreach (var row in x)
                     {
-                        Console.WriteLine(col.Value);
-                        result = JsonConvert.DeserializeObject<GuildConfig>(col.Value.ToString());
-                        found = true;
-                        break;
+                        bool found = false;
+                        foreach (KeyValuePair<string, object> col in row)
+                        {
+                            //Console.WriteLine(col.Value);
+                            result = JsonConvert.DeserializeObject<GuildConfig>(col.Value.ToString());
+                            found = true;
+                            break;
+                        }
+                        if (found)
+                            break;
                     }
-                    if (found)
-                        break;
-                }
-            },
+                },
                 new List<System.Data.SQLite.SQLiteParameter>()
                 {
-                                new System.Data.SQLite.SQLiteParameter() { ParameterName = "@uid", Value = guild.Id }
+                    new System.Data.SQLite.SQLiteParameter() { ParameterName = "@uid", Value = guild.Id }
                 }
             );
 
@@ -338,45 +422,84 @@ namespace GoodAdmin_API.Core
         {
             var guild = GetDeveloperGuild(client);
             globalConfig.session.TryGetValue("logs", out object val);
-            if (val == null) return null;
-            var ch = await guild.GetChannelAsync(Convert.ToUInt64(val));
-            return ch;
+            try
+            {
+                var ch = await guild.GetChannelAsync(Convert.ToUInt64(val));
+                return ch;
+            }
+            catch { }
+
+            return null;
         }
 
         public static async Task<IGuildChannel> GetAgreementChannel(IGuild guild)
         {
             GuildConfig config = await LoadOrCreateGuildConfig(guild);
             config.session.TryGetValue("welcome-agreement-channel", out object val);
-            if (val == null) return null;
-            var ch = await guild.GetChannelAsync(Convert.ToUInt64(val));
-            return ch;
+            try
+            {
+                var ch = await guild.GetChannelAsync(Convert.ToUInt64(val));
+                return ch;
+            }
+            catch { }
+
+            return null;
         }
 
         public static async Task<IGuildChannel> GetSupportChannel(IGuild guild)
         {
             GuildConfig config = await LoadOrCreateGuildConfig(guild);
             config.session.TryGetValue("welcome-agreement", out object val);
-            if (val == null) return null;
-            var ch = await guild.GetChannelAsync(Convert.ToUInt64(val));
-            return ch;
+            try
+            {
+                var ch = await guild.GetChannelAsync(Convert.ToUInt64(val));
+                return ch;
+            }
+            catch { }
+
+            return null;
         }
 
         public static async Task<IGuildChannel> GetTicketLoggingChannel(IGuild guild)
         {
             GuildConfig config = await LoadOrCreateGuildConfig(guild);
             config.session.TryGetValue("ticket-logging-channel", out object val);
-            if (val == null) return null;
-            var ch = await guild.GetChannelAsync(Convert.ToUInt64(val));
-            return ch;
+            try
+            {
+                var ch = await guild.GetChannelAsync(Convert.ToUInt64(val));
+                return ch;
+            }
+            catch { }
+
+            return null;
         }
 
+        public static async Task<IGuildChannel> GetBotLoggingCategory(IGuild guild)
+        {
+            Console.WriteLine("Scanning for Logging Category.");
+            GuildConfig config = await LoadOrCreateGuildConfig(guild);
+            config.session.TryGetValue("logging-category", out object val);
+            Console.WriteLine("Logging Category: " + val);
+            try
+            {
+                var ch = await guild.GetChannelAsync(Convert.ToUInt64(val));
+                return ch;
+            } catch { }
+
+            return null;
+        }
         public static async Task<IGuildChannel> GetBotLoggingChannel(IGuild guild)
         {
             GuildConfig config = await LoadOrCreateGuildConfig(guild);
             config.session.TryGetValue("logging-channel", out object val);
-            if (val == null) return null;
-            var ch = await guild.GetChannelAsync(Convert.ToUInt64(val));
-            return ch;
+            try
+            {
+                var ch = await guild.GetChannelAsync(Convert.ToUInt64(val));
+                return ch;
+            }
+            catch { }
+
+            return null;
         }
 
         public static async Task CleanDatabase()

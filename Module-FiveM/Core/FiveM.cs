@@ -7,10 +7,15 @@ using System.Threading.Tasks;
 
 namespace Module_GameManager
 {
+    [Group("FiveM")]
     public class FiveM : ModuleBase<CommandContext>
     {
-        [Command("server-resource"), RequireBotPermission(GuildPermission.SendMessages), Remarks("Game Viewer - FiveM")]
-        public async Task ServerResourceAsync(uint id)
+        [Command("server-resources"), RequireBotPermission(GuildPermission.SendMessages), Remarks("Game Viewer - FiveM")]
+        public async Task ServerResourcesAsync(uint id)
+        {
+        }
+        [Command("players"), RequireBotPermission(GuildPermission.SendMessages), Remarks("Game Viewer - FiveM")]
+        public async Task PlayersAsync(uint id)
         {
         }
     }
